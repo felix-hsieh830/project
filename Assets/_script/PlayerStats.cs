@@ -80,13 +80,6 @@ public class PlayerStats : MonoBehaviour
                 Debug.Log("死掉啦！移動腳本已關閉！");
             }
 
-            // 🌟 請把你真正用來控制射擊的腳本名稱替換掉「PlayerShoot」
-            MonoBehaviour shootScript = GetComponent("PlayerShoot") as MonoBehaviour;
-            if (shootScript != null)
-            {
-                shootScript.enabled = false; // 禁用射擊腳本
-                Debug.Log("死掉啦！射擊腳本已關閉！");
-            }
             GetComponent<MeshRenderer>().enabled = false;
         }
     }

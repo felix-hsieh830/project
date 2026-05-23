@@ -3,7 +3,7 @@ using TMPro;
 
 public class BuffGate : MonoBehaviour
 {
-    public enum BuffType { AddArrow, AttackSpeed, AttackRange, CritRate, Damage, MaxHP }
+    public enum BuffType { AttackSpeed, AttackRange, CritRate, Damage, MaxHP }
 
     [Header("UI 顯示")]
     public TextMeshPro buffText;
@@ -59,7 +59,6 @@ public class BuffGate : MonoBehaviour
         string buffNameInChinese = "";
         switch (myBuffType)
         {
-            case BuffType.AddArrow: buffNameInChinese = "箭矢數量"; break;
             case BuffType.AttackSpeed: buffNameInChinese = "攻擊速度"; break;
             case BuffType.AttackRange: buffNameInChinese = "攻擊距離"; break;
             case BuffType.CritRate: buffNameInChinese = "爆擊機率"; break;
@@ -73,11 +72,10 @@ public class BuffGate : MonoBehaviour
     void RollBuffType()
     {
         int roll = Random.Range(0, 100);
-        if (roll < 5) myBuffType = BuffType.AddArrow;
-        else if (roll < 20) myBuffType = BuffType.AttackSpeed;
-        else if (roll < 35) myBuffType = BuffType.CritRate;
-        else if (roll < 55) myBuffType = BuffType.AttackRange;
-        else if (roll < 75) myBuffType = BuffType.MaxHP;
+        if (roll < 20) myBuffType = BuffType.AttackSpeed;
+        else if (roll < 40) myBuffType = BuffType.CritRate;
+        else if (roll < 60) myBuffType = BuffType.AttackRange;
+        else if (roll < 80) myBuffType = BuffType.MaxHP;
         else myBuffType = BuffType.Damage;
     }
 
@@ -86,7 +84,6 @@ public class BuffGate : MonoBehaviour
         float baseVal = 0;
         switch (myBuffType)
         {
-            case BuffType.AddArrow: baseVal = 1f; break;
             case BuffType.AttackSpeed: baseVal = 0.2f; break;
             case BuffType.AttackRange: baseVal = 3f; break;
             case BuffType.CritRate: baseVal = 0.05f; break;
@@ -121,7 +118,7 @@ public class BuffGate : MonoBehaviour
   
             buffValue = Mathf.Round(buffValue);
         }
-        if (myBuffType == BuffType.AddArrow || myBuffType == BuffType.MaxHP)
+        if (myBuffType == BuffType.MaxHP)
         {
             buffValue = Mathf.Round(buffValue);
         }
@@ -131,20 +128,34 @@ public class BuffGate : MonoBehaviour
         }
     }
 
+    private bool hasTriggered = false;
     void OnTriggerEnter(Collider other)
     {
+        if (hasTriggered) return;
+
         PlayerStats stats = other.GetComponent<PlayerStats>();
         if (stats != null)
         {
+            // 🌟 碰到的瞬間立刻上鎖，就算同一個畫面撞到兩次也進不來了！
+            hasTriggered = true;
+
+            // 1. 玩家獲得能力加成
             switch (myBuffType)
             {
-                case BuffType.AddArrow: stats.arrowCount += (int)buffValue; break;
                 case BuffType.AttackSpeed: stats.attackSpeed += buffValue; break;
                 case BuffType.AttackRange: stats.attackRange += buffValue; break;
                 case BuffType.CritRate: stats.critRate += buffValue; break;
                 case BuffType.Damage: stats.baseDamage += buffValue; break;
                 case BuffType.MaxHP: stats.AddMaxHealth((int)buffValue); break;
             }
+
+            GameManager gm = FindAnyObjectByType<GameManager>();
+            if (gm != null)
+            {
+                gm.AddDoorCount();
+            }
+
+
             if (transform.parent != null) Destroy(transform.parent.gameObject);
             else Destroy(gameObject);
         }

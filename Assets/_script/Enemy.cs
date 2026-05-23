@@ -10,6 +10,9 @@ public class Enemy : MonoBehaviour
     [Header("UI 顯示")]
     public TextMeshPro hpText;
 
+    [Header("掉落設定")]
+    public GameObject chestPrefab;  
+
     void Start()
     {
         // 1. 新手保護機制 (Z < 30 不生怪)
@@ -25,7 +28,7 @@ public class Enemy : MonoBehaviour
         float stage = Mathf.Floor(scalingDistance / 40f);
 
         // 階段 0 的時候，倍率就是乾乾淨淨的 1f！
-        float scaleFactor = Mathf.Pow(1.2f, stage);
+        float scaleFactor = Mathf.Pow(1.1f, stage);
 
         maxHp = Mathf.Round(maxHp * scaleFactor);
 
@@ -50,6 +53,14 @@ public class Enemy : MonoBehaviour
             {
                 player.AddKill();
             }
+
+
+            if (chestPrefab != null)
+            {
+                Vector3 dropPos = new Vector3(transform.position.x, -0.45f, transform.position.z);
+                Instantiate(chestPrefab, dropPos, chestPrefab.transform.rotation);
+            }
+
             Destroy(gameObject);
         }
     }

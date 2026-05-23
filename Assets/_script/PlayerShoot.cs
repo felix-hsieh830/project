@@ -6,19 +6,35 @@ public class PlayerShoot : MonoBehaviour
     [SerializeField] private float offsetWidth = 0.5f;
 
     private float timer = 0f;
-    private PlayerStats stats; // 用來綁定大腦
+    private PlayerStats stats;
+
+    // ==========================================
+    // 🌟 新增：用來記錄玩家位置與計算即時速度的變數
+    // ==========================================
+    private float currentPlayerZSpeed = 0f;
+    private Vector3 lastPosition;
 
     void Start()
     {
-        // 遊戲一開始，自動去身上找 PlayerStats 腳本
         stats = GetComponent<PlayerStats>();
+        lastPosition = transform.position; // 紀錄初始位置
     }
 
     void Update()
     {
-        timer += Time.deltaTime;
 
-        // 將「每秒攻擊次數(攻速)」轉換成「冷卻時間(秒)」
+        if (Time.deltaTime > 0f)
+        {
+            currentPlayerZSpeed = (transform.position.z - lastPosition.z) / Time.deltaTime;
+        }
+        else
+        {
+            currentPlayerZSpeed = 0f; // 時間暫停時，動能歸零
+        }
+        
+        lastPosition = transform.position; // 更新紀錄點
+
+        timer += Time.deltaTime;
         float fireCooldown = 1f / stats.attackSpeed;
 
         if (timer >= fireCooldown)
@@ -30,7 +46,7 @@ public class PlayerShoot : MonoBehaviour
 
     void Shoot()
     {
-        for (int i = 0; i < stats.arrowCount; i++) // 現在讀取 stats 裡的箭數
+        for (int i = 0; i < stats.arrowCount; i++)
         {
             float offsetX = 0;
             if (stats.arrowCount > 1)
@@ -38,16 +54,18 @@ public class PlayerShoot : MonoBehaviour
                 offsetX = -offsetWidth * (stats.arrowCount - 1) / 2f + (offsetWidth * i);
             }
 
-            Vector3 spawnPosition = transform.position + new Vector3(offsetX, 0, 0);
+            // 🌟 順便把生成點往前挪 1.5f (第一招跟第二招結合最完美)
+            Vector3 spawnPosition = transform.position + new Vector3(offsetX, 0, 1.5f);
 
-            // 生成箭矢
             GameObject arrow = Instantiate(arrowPrefab, spawnPosition, transform.rotation);
 
-            // 找到這支箭身上的 ArrowFly 腳本，把玩家的屬性傳給它！
             ArrowFly arrowScript = arrow.GetComponent<ArrowFly>();
             if (arrowScript != null)
             {
-                arrowScript.Setup(stats.baseDamage, stats.attackRange, stats.critRate, stats.critDamage);
+                // ==========================================
+                // 🌟 修改這裡：把 currentPlayerZSpeed (玩家動能) 當作第 5 個參數傳過去！
+                // ==========================================
+                arrowScript.Setup(stats.baseDamage, stats.attackRange, stats.critRate, stats.critDamage, currentPlayerZSpeed);
             }
         }
     }
