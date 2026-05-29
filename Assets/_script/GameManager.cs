@@ -16,13 +16,16 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI btnCText;
     public GameObject buttonCObject; // 控制第三個按鈕顯示/隱藏
 
-    [Header("Boss 召喚設定")]
-    public int doorCount = 0; // 記錄目前穿過了幾扇門
+    [Header("Boss 生成設定 (以距離為準)")]
+    public float nextBossDistance = 450f; // 🌟 第一隻 Boss 固定出現的距離
+    public float bossInterval = 450f;     // 🌟 之後每隔幾公尺出一隻
+    private int bossSpawnCount = 0;        // 🌟 記住已經出了幾隻 Boss
+    public float bossOffset = 10f;
 
     [Header("Boss 實體設定")]
     public GameObject smallBossPrefab;
     public GameObject bigBossPrefab;
-    public float bossSpawnDistance = 60f; // 在玩家前方多遠的地方生成 Boss
+    public float bossSpawnDistance = 55f; // 在玩家前方多遠的地方生成 Boss
 
     // 記住現在是大 Boss 還是小 Boss
     private bool isBigBossReward = false;
@@ -34,6 +37,29 @@ public class GameManager : MonoBehaviour
     {
         // 遊戲開始時，自動在場景中尋找主角的數值大腦
         playerStats = FindAnyObjectByType<PlayerStats>();
+    }
+
+    void Update()
+    {
+        if (playerStats != null)
+        {
+            float playerDistance = playerStats.transform.position.z - 30f;
+
+            if (playerDistance >= nextBossDistance - bossSpawnDistance)
+            {
+                bossSpawnCount++;
+                bool isBigBoss = (bossSpawnCount % 3 == 0);
+                float bossWorldZ = (nextBossDistance+bossOffset) + 35f;
+
+                Debug.Log($"🚩 進入 Boss 視線範圍！Boss 已在世界座標 {bossWorldZ} m 處提早降落等待！");
+
+                // 把校正好的絕對座標傳給 Boss
+                SpawnBoss(isBigBoss, bossWorldZ);
+
+                // 更新下一隻 Boss 的距離
+                nextBossDistance += bossInterval;
+            }
+        }
     }
 
     //  死亡與結算系統
@@ -69,7 +95,7 @@ public class GameManager : MonoBehaviour
 
             btnAText.text = "輕弩流派\n射速加快 (+50%)\n傷害降低 (-20%)";
             btnBText.text = "重砲流派\n攻擊加痛 (+15)\n攻速變慢 (-20%)";
-            btnCText.text = "多重箭流派\n箭矢數量 +1\n傷害降低 (-30%)";
+            btnCText.text = "多重箭流派\n箭矢數量 +2\n傷害降低 (-50%)";
         }
         else
         {
@@ -125,8 +151,8 @@ public class GameManager : MonoBehaviour
         {
             if (!isBigBossReward)
             {
-                playerStats.arrowCount += 1;    // 箭矢數量增加！
-                playerStats.baseDamage *= 0.7f; // 傷害降低
+                playerStats.arrowCount += 2;    // 箭矢數量增加！
+                playerStats.baseDamage *= 0.5f; // 傷害降低
             }
         }
         ResumeGame();
@@ -138,27 +164,14 @@ public class GameManager : MonoBehaviour
         rewardPanel.SetActive(false);
         Time.timeScale = 1f;
     }
-    public void AddDoorCount()
-    {
-        doorCount++;
-        Debug.Log("目前穿過了 " + doorCount + " 扇門！");
-
-        // 檢查是不是 15 的倍數
-        if (doorCount % 15 == 0)
-        {
-            // 檢查是不是 60 的倍數 (60, 120, 180...)
-            bool isBigBoss = (doorCount % 60 == 0);
-            SpawnBoss(isBigBoss);
-        }
-    }
 
     // 🌟 新增：召喚 Boss 的準備動作
-    private void SpawnBoss(bool isBigBoss)
+    private void SpawnBoss(bool isBigBoss , float targetZ)
     {
         Transform playerTrans = playerStats.transform;
 
         // 1. 計算生成位置：生成在玩家前方 55 公尺 (在兩扇門的前方，不覆蓋門)
-        Vector3 spawnPos = new Vector3(0, 1.5f, playerTrans.position.z + 55f);
+        Vector3 spawnPos = new Vector3(0, 1.5f, targetZ);
 
         // ==========================================
         // 🌟 2. 核心複製：套用小怪公式，計算 Boss 降落位置的小怪基準血量

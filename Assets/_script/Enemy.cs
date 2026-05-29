@@ -4,14 +4,16 @@ using TMPro;
 public class Enemy : MonoBehaviour
 {
     [Header("怪物屬性")]
-    public float maxHp = 50f;
+    public float maxHp = 30f;
     private float currentHp;
 
     [Header("UI 顯示")]
     public TextMeshPro hpText;
 
     [Header("掉落設定")]
-    public GameObject chestPrefab;  
+    public GameObject chestPrefab;
+
+    private bool isDead = false; // 防止同幀多次觸發死亡
 
     void Start()
     {
@@ -43,22 +45,26 @@ public class Enemy : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
+        if (isDead) return; // 已死亡，擋掉重複呼叫
+
         currentHp -= damage;
         UpdateHPUI();
 
         if (currentHp <= 0)
         {
+            isDead = true; // 立刻鎖上，防止同幀第二次進來
+
             PlayerStats player = FindAnyObjectByType<PlayerStats>();
             if (player != null)
             {
                 player.AddKill();
             }
 
-
             if (chestPrefab != null)
             {
-                Vector3 dropPos = new Vector3(transform.position.x, -0.45f, transform.position.z);
-                Instantiate(chestPrefab, dropPos, chestPrefab.transform.rotation);
+                Vector3 dropPos = new Vector3(transform.position.x-0.75f, -0.45f, transform.position.z);
+                Quaternion chestRotation = Quaternion.Euler(0, 180f, 0);
+                Instantiate(chestPrefab, dropPos, chestRotation);
             }
 
             Destroy(gameObject);
@@ -74,19 +80,18 @@ public class Enemy : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
+        if (isDead) return; // 同樣的保護
+
         PlayerStats player = other.GetComponent<PlayerStats>();
 
         if (player != null)
         {
-            // ==========================================================
-            // 🌟 修正 Bug：將扣血機制與怪物當前血量連動！
-            // 因為玩家的 TakeDamage 需要整數 (int)，我們用 Mathf.RoundToInt 把怪物的 float 血量四捨五入轉成整數
-            // ==========================================================
+            isDead = true; // 鎖上
+
             int damageToPlayer = Mathf.RoundToInt(currentHp);
+            player.TakeDamage(damageToPlayer);
 
-            player.TakeDamage(damageToPlayer); // 讓玩家扣除等同於怪物血量的傷害
-
-            Destroy(gameObject); // 怪物自爆消失
+            Destroy(gameObject);
         }
     }
 }

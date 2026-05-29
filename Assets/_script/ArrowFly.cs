@@ -7,36 +7,60 @@ public class ArrowFly : MonoBehaviour
     private float finalDamage;
 
     // 🌟 修改：多接收第 5 個參數 inheritedSpeed (玩家當前的跑速)
-    public void Setup(float playerDamage, float playerRange, float critRate, float critDamage, float inheritedSpeed)
+    // 🌟 新增第六個參數：flightSpeedMultiplier
+    public void Setup(float playerDamage, float playerRange, float critRate, float critDamage, float inheritedSpeed, float flightSpeedMultiplier)
     {
-        // 1. 決定有沒有爆擊
         if (Random.value <= critRate)
         {
-            // 爆擊啦！傷害翻倍，而且把箭變大 1.5 倍看起來比較爽！
             finalDamage = playerDamage * critDamage;
-            transform.localScale *= 1.5f;
+            transform.localScale *= 1.8f;
         }
         else
         {
-            // 沒爆擊，一般傷害
             finalDamage = playerDamage;
         }
 
         // ==========================================
-        //  2. 物理動能疊加：最終速度 = 箭的初速 + 玩家當前跑速
+        // 🌟 核心修改：箭矢基礎速度 x 飛速倍率，最後再疊加玩家跑速
         // ==========================================
-        totalSpeed = speed + inheritedSpeed;
+        float baseSpeed = speed * flightSpeedMultiplier;
+        totalSpeed = baseSpeed + inheritedSpeed;
 
-        //  3. 修正壽命計算：必須用「疊加後的速度 (totalSpeed)」來算壽命
-        // 這樣不管箭飛多快，它的最終射程 (playerRange) 都會是精準的！
-        float lifeTime = playerRange / totalSpeed;
+        float finalRange = Mathf.Min(playerRange, 90f);
+        float lifeTime = finalRange / totalSpeed;
         Destroy(gameObject, lifeTime);
     }
 
     void Update()
     {
-        // 修改：移動時使用 totalSpeed 替代原本的 speed
-        transform.Translate(0, 0, totalSpeed * Time.deltaTime);
+        // 1. 算出這 1/60 秒內，箭矢「預計」要往前衝多遠
+        float stepDistance = totalSpeed * Time.deltaTime;
+
+        RaycastHit hit;
+        
+        // 參數：(起點, 方向, 裝打到的東西, 雷射長度)
+        if (Physics.Raycast(transform.position, transform.forward, out hit, stepDistance))
+        {
+            // 如果雷射在這短短的距離內，掃到東西了！
+            Enemy target = hit.collider.GetComponent<Enemy>();
+            if (target != null)
+            {
+                target.TakeDamage(finalDamage);
+                Destroy(gameObject);
+                return; // 撞到了就提早收工，不要再往前移動了
+            }
+
+            BossHealth boss = hit.collider.GetComponent<BossHealth>();
+            if (boss != null)
+            {
+                boss.TakeDamage(finalDamage);
+                Destroy(gameObject);
+                return;
+            }
+        }
+
+        // 3. 確定前方安全，雷射沒掃到怪，才真正往前移動
+        transform.Translate(0, 0, stepDistance);
     }
 
     void OnTriggerEnter(Collider other)

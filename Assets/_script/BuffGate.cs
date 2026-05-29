@@ -149,13 +149,6 @@ public class BuffGate : MonoBehaviour
                 case BuffType.MaxHP: stats.AddMaxHealth((int)buffValue); break;
             }
 
-            GameManager gm = FindAnyObjectByType<GameManager>();
-            if (gm != null)
-            {
-                gm.AddDoorCount();
-            }
-
-
             if (transform.parent != null) Destroy(transform.parent.gameObject);
             else Destroy(gameObject);
         }

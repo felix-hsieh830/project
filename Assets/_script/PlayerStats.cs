@@ -19,9 +19,9 @@ public class PlayerStats : MonoBehaviour
 
     [Header("UI 顯示")]
     public TextMeshPro hpText; // 🌟 用來裝主角頭頂文字的格子
-    public TextMeshProUGUI distanceText; 
+    public TextMeshProUGUI distanceText;
     public TextMeshProUGUI killText;
-    public GameManager gameManager;     
+    public GameManager gameManager;
 
     // 🌟 新增：紀錄殺怪數量
     private int killCount = 0;
@@ -40,20 +40,22 @@ public class PlayerStats : MonoBehaviour
         int distance = Mathf.FloorToInt(transform.position.z) - 30;
         if (distance < 0) distance = 0;
 
-        // 不斷更新左上角的距離 UI
+        // 🌟 修改：用 FormatNumber 包裝距離數字！
         if (distanceText != null)
         {
-            distanceText.text = "距離: " + distance + " m";
+            distanceText.text = "距離: " + FormatNumber(distance) + " m";
         }
     }
+
 
     // 🌟 新增：專門給怪物呼叫的加分魔法
     public void AddKill()
     {
         killCount++;
+        // 🌟 修改：用 FormatNumber 包裝擊殺數字！
         if (killText != null)
         {
-            killText.text = "擊殺: " + killCount;
+            killText.text = "擊殺: " + FormatNumber(killCount);
         }
     }
 
@@ -67,7 +69,7 @@ public class PlayerStats : MonoBehaviour
             // 🌟 死亡結算：算出當下距離
             int finalDistance = Mathf.FloorToInt(transform.position.z) - 30;
             if (finalDistance < 0) finalDistance = 0;
-            
+
             // 🌟 呼叫總管顯示面板，並傳入最終距離與擊殺數！
             if (gameManager != null)
             {
@@ -88,10 +90,10 @@ public class PlayerStats : MonoBehaviour
     {
         maxHp += amount;
         currentHp += amount;
-        
+
         // 🌟 最關鍵的一行：數字改完之後，一定要呼叫這個魔法刷新 3D 文字！
-        UpdateHPUI(); 
-        
+        UpdateHPUI();
+
         Debug.Log("吃到血包了！最大生命增加 " + amount + "。目前血量：" + currentHp);
     }
 
@@ -101,7 +103,20 @@ public class PlayerStats : MonoBehaviour
         if (hpText == null) return; // 防呆
         if (currentHp < 0) currentHp = 0;
 
-        // 🌟 貫徹極簡美學，只顯示純數字
-        hpText.text = currentHp.ToString();
+        // 🌟 修改：用 FormatNumber 包裝血量數字，變成超酷的 1K 顯示法！
+        hpText.text = FormatNumber(currentHp);
+    }
+
+    // ==========================================
+    // 🌟 數字縮寫轉換機 (將大數字轉成 K, M, B)
+    // 直接複製一份過來給 UI 即時更新使用！
+    // ==========================================
+    public string FormatNumber(float number)
+    {
+        if (number >= 1000000000) return (number / 1000000000f).ToString("0.##") + "B";
+        else if (number >= 1000000) return (number / 1000000f).ToString("0.##") + "M";
+        else if (number >= 1000) return (number / 1000f).ToString("0.##") + "K";
+
+        return Mathf.FloorToInt(number).ToString();
     }
 }

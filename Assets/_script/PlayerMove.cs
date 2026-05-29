@@ -14,8 +14,8 @@ public class PlayerMove : MonoBehaviour
         float distance = transform.position.z;
         if (distance < 0) distance = 0; // 避免剛開局在新手村時減速
 
-        // 假設每跑 100 公尺，速度就增加 1.5
-        float extraSpeed = (distance / 100f) * 1.1f; 
+        // 假設每跑 100 公尺，速度就增加 0.5
+        float extraSpeed = (distance / 100f) * 0.5f; 
         
         // 最終的衝刺速度 = 初始速度 + 額外獲得的速度
         float currentSpeed = forwardSpeed + extraSpeed; 

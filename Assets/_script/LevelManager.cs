@@ -11,7 +11,7 @@ public class LevelManager : MonoBehaviour
     public float trackLength = 10f;
 
     private List<GameObject> activeTracks = new List<GameObject>();
-    private int maxTracksOnScreen = 7;
+    private int maxTracksOnScreen = 5;
 
     void Start()
     {

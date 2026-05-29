@@ -1,21 +1,28 @@
 using UnityEngine;
-using TMPro; // 🌟 記得加這行才能使用文字組件
+using TMPro;
 
 public class BossHealth : MonoBehaviour
+
 {
     [Header("Boss 數值設定")]
     public float hp = 1000f;
+    public float currentHp;
     public bool isBigBoss = false;
 
     [Header("UI 顯示")]
     public TextMeshPro hpText; // 🌟 用來拉文字組件的格子
 
+    private bool isDead = false;
+
     // 當 GameManager 設定血量時呼叫
     public void SetupHealth(float newHP)
     {
         hp = newHP;
+        currentHp = hp;
         UpdateHPUI(); // 🌟 設定好血量立刻更新文字
     }
+
+
 
     public void TakeDamage(float damage)
     {
@@ -40,6 +47,34 @@ public class BossHealth : MonoBehaviour
 
         // 💡 進階小特效：如果是大 Boss，可以把文字變紅色
         if (isBigBoss) hpText.color = Color.red;
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (isDead) return;
+
+        PlayerStats player = other.GetComponentInParent<PlayerStats>();
+        if (player != null)
+        {
+            isDead = true; 
+
+            // 1. 玩家扣血
+            int damageToPlayer = Mathf.RoundToInt(currentHp); // 這裡你原本寫的是 hp 還是 currentHp 都可以
+            player.TakeDamage(damageToPlayer);
+
+            if (player.currentHp > 0) 
+            {
+                // 活下來了！發放獎勵！
+                GameManager gm = FindAnyObjectByType<GameManager>();
+                if (gm != null)
+                {
+                    gm.ShowReward(isBigBoss);
+                }
+            }
+
+            // 3. 雙方同歸於盡 (Boss 銷毀)
+            Destroy(gameObject);
+        }
     }
 
     private void Die()
