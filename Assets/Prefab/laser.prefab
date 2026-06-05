@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4446418910349845402}
   - component: {fileID: 1113661990171975014}
   - component: {fileID: 7454090486804346634}
+  - component: {fileID: -5954034940644001119}
   m_Layer: 0
   m_Name: laser
   m_TagString: Untagged
@@ -28,8 +29,8 @@ Transform:
   m_GameObject: {fileID: 9046283866469649881}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 0.33549, y: 0.6508, z: -0.3545}
-  m_LocalScale: {x: 0.02757, y: 0.05, z: 0.027900001}
+  m_LocalPosition: {x: 0.15579808, y: 0.000000033501117, z: 0.8442245}
+  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -106,7 +107,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -114,3 +115,18 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
+--- !u!114 &-5954034940644001119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9046283866469649881}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c31f8ecbaea06f4bab720e680622c47, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossProjectile
+  speed: 15
+  damage: 20
+  lifeTime: 4

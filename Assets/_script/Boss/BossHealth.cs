@@ -61,6 +61,8 @@ public class BossHealth : MonoBehaviour
         }
     }
 
+
+ 
     // 🌟 登場過場動畫協程
     IEnumerator BossIntroRoutine()
     {
@@ -75,13 +77,12 @@ public class BossHealth : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
-        // 🌟 防護罩：如果正在無敵狀態，直接免疫傷害，不扣血！
-        if (isInvincible) return;
+        if (isInvincible || isDead) return;
+        currentHp -= damage;
 
-        hp -= damage;
-        UpdateHPUI();
+        UpdateHPUI(); // 更新血條 UI
 
-        if (hp <= 0 && !isDead)
+        if (currentHp <= 0)
         {
             Die();
         }
@@ -90,8 +91,9 @@ public class BossHealth : MonoBehaviour
     void UpdateHPUI()
     {
         if (hpText == null) return;
-        if (hp < 0) hp = 0;
-        hpText.text = Mathf.CeilToInt(hp).ToString();
+        if (currentHp < 0) currentHp = 0;
+        hpText.text = Mathf.CeilToInt(currentHp).ToString();
+
         if (isBigBoss) hpText.color = Color.red;
     }
 
@@ -142,5 +144,13 @@ public class BossHealth : MonoBehaviour
         GameManager gm = FindAnyObjectByType<GameManager>();
         if (gm != null) gm.ShowReward(isBigBoss);
         Destroy(gameObject);
+    }
+    public string FormatNumber(float number)
+    {
+        if (number >= 1000000000) return (number / 1000000000f).ToString("0.##") + "B";
+        else if (number >= 1000000) return (number / 1000000f).ToString("0.##") + "M";
+        else if (number >= 1000) return (number / 1000f).ToString("0.##") + "K";
+
+        return Mathf.FloorToInt(number).ToString();
     }
 }

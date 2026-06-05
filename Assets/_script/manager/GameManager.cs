@@ -34,6 +34,7 @@ public class GameManager : MonoBehaviour
 
     private bool isBigBossReward = false;
     private PlayerStats playerStats;
+    private bool isSpawning = false;
 
     void Start()
     {
@@ -51,12 +52,14 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if (playerStats != null)
+        if (playerStats != null && !isSpawning) // 🌟 檢查鎖
         {
             float playerDistance = playerStats.transform.position.z - 30f;
 
             if (playerDistance >= nextBossDistance - bossSpawnDistance)
             {
+                isSpawning = true; // 🌟 鎖上！
+
                 bossSpawnCount++;
                 bool isBigBoss = (bossSpawnCount % 4 == 0);
                 float bossWorldZ = (nextBossDistance + bossOffset) + 35f;
@@ -65,8 +68,16 @@ public class GameManager : MonoBehaviour
 
                 SpawnBoss(isBigBoss, bossWorldZ);
                 nextBossDistance += bossInterval;
+
+                // 🌟 給予一點延遲才解鎖，確保距離已經加上去，避免重複觸發
+                Invoke("ResetSpawnLock", 2.0f);
             }
         }
+    }
+
+    private void ResetSpawnLock()
+    {
+        isSpawning = false;
     }
 
     private void PauseGame()

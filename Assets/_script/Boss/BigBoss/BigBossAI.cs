@@ -48,7 +48,7 @@ public class BigBossAI : MonoBehaviour
         // 🌟 核心：判斷是否該進入第二階段 (血量 <= 50%)
         // ==========================================
         // 在你的 BossHealth 裡，currentHp 裝的是最大血量，hp 才是當前血量
-        if (!isPhaseTwo && healthScript.hp <= healthScript.currentHp * 0.5f)
+        if (!isPhaseTwo && healthScript.currentHp <= healthScript.hp * 0.5f)
         {
             isPhaseTwo = true;
             Debug.Log("💀 大 Boss 進入第二階段：死靈召喚！");
@@ -100,7 +100,16 @@ public class BigBossAI : MonoBehaviour
         if (laserPrefab != null)
         {
             Vector3 spawnPos = transform.position + new Vector3(0, 1f, -1.5f);
-            Instantiate(laserPrefab, spawnPos, Quaternion.Euler(0, 180, 0));
+            
+            // 假設原本只有寫 Instantiate(laserPrefab, ...);
+            // 把它改成用迴圈一次射 5 發，帶有角度偏移 (扇形)
+            for (int i = -1; i <= 3; i++)
+            {
+                // i 會是 -1, 0, 1
+                GameObject bullet = Instantiate(laserPrefab, spawnPos, Quaternion.Euler(0, 180, 0));
+                // 讓子彈在 Y 軸上旋轉一個角度 (例如每發相差 15 度)
+                bullet.transform.Rotate(0, i * 15f, 0);
+            }
         }
     }
 

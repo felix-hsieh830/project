@@ -5154,8 +5154,8 @@ MonoBehaviour:
   btnCText: {fileID: 393013900}
   buttonCObject: {fileID: 1919771918}
   pausePanel: {fileID: 312470391}
-  nextBossDistance: 450
-  bossInterval: 450
+  nextBossDistance: 50
+  bossInterval: 50
   bossOffset: -10
   smallBossPrefabs:
   - {fileID: 8650953477767932515, guid: 88025c01ec3626a4c9b4ba391ceeb1fb, type: 3}
