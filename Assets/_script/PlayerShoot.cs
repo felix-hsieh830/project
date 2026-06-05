@@ -2,102 +2,81 @@ using UnityEngine;
 
 public class PlayerShoot : MonoBehaviour
 {
-    public GameObject arrowPrefab;
+    [Header("射擊設定")]
+    public GameObject arrowPrefab;        // 箭矢的 Prefab (預製物)
+    public Transform shootPoint;          // 箭矢生成的起點
+    public float fireRate = 0.5f;         // 射擊間隔（秒），吃寶箱後這個數字會變小（射速變快）
 
-    private float timer = 0f;
-    private PlayerStats stats;
+    [Header("初始射速設定")]
+    public float baseFireRate = 0.5f;     // 🌟 新增：基準發射速度（用來計算倍率，通常設跟初始 fireRate 一樣）
 
-    private float currentPlayerZSpeed = 0f;
-    private Vector3 lastPosition;
-
-    private float maxAttackSpeed = 80f;
-    private int maxArrowsPerShot = 100;
-
-    // 🌟 箭矢基礎速度，要跟 ArrowFly 裡的 speed 一致
-    private float arrowBaseSpeed = 15f;
+    [Header("引用其他組件")]
+    private PlayerAnimatorController animController;
+    private float shotTimer = 0f;
+    private bool justShot = false;
 
     void Start()
     {
-        stats = GetComponent<PlayerStats>();
-        lastPosition = transform.position;
+        // 取得同一個物件上的動畫控制器
+        animController = GetComponent<PlayerAnimatorController>();
+
+        // 如果沒有手動在 Inspector 指派發射點，預設使用角色自己的位置
+        if (shootPoint == null)
+        {
+            shootPoint = this.transform;
+        }
     }
 
     void Update()
     {
-        if (Time.deltaTime > 0f)
-            currentPlayerZSpeed = (transform.position.z - lastPosition.z) / Time.deltaTime;
-        else
-            currentPlayerZSpeed = 0f;
+        // 重設每幀的射擊狀態
+        justShot = false;
 
-        lastPosition = transform.position;
-        timer += Time.deltaTime;
-
-        float actualAttackSpeed = stats.attackSpeed;
-        float speedDamageMultiplier = 1f;
-
-        if (actualAttackSpeed > maxAttackSpeed)
+        // 🌟 核心邏輯：動態計算動畫速度倍率並傳給 Animator
+        // 原理：初始間隔 / 當前間隔。例如原本 0.5 秒一發(1倍速)，變成 0.25 秒一發時，倍率 = 0.5 / 0.25 = 2 倍速
+        if (animController != null && animController.animator != null)
         {
-            speedDamageMultiplier = actualAttackSpeed / maxAttackSpeed;
-            actualAttackSpeed = maxAttackSpeed;
+            float speedMultiplier = baseFireRate / fireRate;
+            animController.animator.SetFloat("AttackSpeedParam", speedMultiplier);
         }
 
-        float fireCooldown = 1f / actualAttackSpeed;
+        // 累加計時器
+        shotTimer += Time.deltaTime;
 
-        if (timer >= fireCooldown)
+        // 當時間到了，就自動發射
+        if (shotTimer >= fireRate)
         {
-            Shoot(speedDamageMultiplier);
-            timer = 0f;
+            Shoot();
+            shotTimer = 0f; // 重置計時器
         }
     }
 
-    void Shoot(float speedDamageMultiplier)
+    void Shoot()
     {
-        int actualArrowCount = stats.arrowCount;
-        float countDamageMultiplier = 1f;
-
-        if (actualArrowCount > maxArrowsPerShot)
+        if (arrowPrefab == null)
         {
-            countDamageMultiplier = (float)actualArrowCount / maxArrowsPerShot;
-            actualArrowCount = maxArrowsPerShot;
+            Debug.LogWarning("請在 Inspector 中指派 Arrow Prefab！");
+            return;
         }
 
-        float totalDamageMultiplier = speedDamageMultiplier * countDamageMultiplier;
-        float flightSpeedMultiplier = 1f + (stats.attackSpeed * 0.1f);
+        // 1. 生成箭矢
+        Instantiate(arrowPrefab, shootPoint.position, shootPoint.rotation);
 
-        float actualRange = Mathf.Min(stats.attackRange, 90f);
-        float estimatedTotalSpeed = arrowBaseSpeed * flightSpeedMultiplier + currentPlayerZSpeed;
-        float flightTime = actualRange / Mathf.Max(estimatedTotalSpeed, 0.1f);
+        // 2. 標記剛剛射擊了
+        justShot = true;
 
-        // 🌟 每往外一格，增加幾度（這個是核心參數）
-        float anglePerStep = 1f;
-
-        // 🌟 越外側的箭飛行中額外擴散幾度
-        float yawPerStep = 2.5f;
-
-        for (int i = 0; i < actualArrowCount; i++)
+        // 3. 通知動畫控制器：播放射箭動畫
+        if (animController != null)
         {
-            // 🌟 算出這根箭距離中心幾格
-            // 例如 5 根：索引 0~4，中心 = 2，距離 = -2,-1,0,1,2
-            float center = (actualArrowCount - 1) / 2f;
-            float distFromCenter = i - center; // 負 = 左，正 = 右
-            float maxAngleLimit = 100f;
-
-            // 🌟 角度直接用距離 * 固定步進，中間永遠是 0
-            float spawnAngle = Mathf.Clamp(distFromCenter * anglePerStep, -maxAngleLimit, maxAngleLimit);
-
-            // 🌟 越外側飛行中擴散越多
-            float yawRate = (distFromCenter / Mathf.Max(center, 1f)) * yawPerStep / Mathf.Max(flightTime, 0.1f);
-
-            Quaternion arrowRotation = transform.rotation * Quaternion.Euler(0, spawnAngle, 0);
-            Vector3 spawnPosition = transform.position + new Vector3(0, 0, 1.5f);
-            GameObject arrow = Instantiate(arrowPrefab, spawnPosition, arrowRotation);
-
-            ArrowFly arrowScript = arrow.GetComponent<ArrowFly>();
-            if (arrowScript != null)
-            {
-                float finalBaseDamage = stats.baseDamage * totalDamageMultiplier;
-                arrowScript.Setup(finalBaseDamage, stats.attackRange, stats.critRate, stats.critDamage, currentPlayerZSpeed, flightSpeedMultiplier, yawRate);
-            }
+            animController.TriggerShootAnimation();
         }
+    }
+
+    /// <summary>
+    /// 提供給外部（如動畫控制器）查詢：這一幀是否剛好發射了箭
+    /// </summary>
+    public bool CheckIfJustShot()
+    {
+        return justShot;
     }
 }

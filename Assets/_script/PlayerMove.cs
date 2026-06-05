@@ -2,37 +2,51 @@ using UnityEngine;
 
 public class PlayerMove : MonoBehaviour
 {
-    public float forwardSpeed = 5f; // 這個現在當作你的「初始起步速度」
-    public float sideSpeed = 5f;
+    [Header("移動速度設定")]
+    public float forwardSpeed = 5f;       // 自動向前奔跑的速度
+    public float horizontalSpeed = 8f;    // 玩家左右閃躲的速度
 
-    // 設定左右的邊界距離是 4.5
-    public float limitX = 4.5f;
+    [Header("跑道邊界限制")]
+    public float minX = -4f;              // 跑道左邊界
+    public float maxX = 4f;               // 跑道右邊界
+
+    [Header("引用其他組件")]
+    private PlayerAnimatorController animController;
+    private float horizontalInput;
+
+    void Start()
+    {
+        // 取得同一個物件上的動畫控制器
+        animController = GetComponent<PlayerAnimatorController>();
+    }
 
     void Update()
     {
-        // 🌟 1. 加速引擎：利用 Z 軸距離計算當下速度
-        float distance = transform.position.z;
-        if (distance < 0) distance = 0; // 避免剛開局在新手村時減速
+        // 1. 偵測玩家的左右輸入 (A/D 鍵 或 左右方向鍵)
+        horizontalInput = Input.GetAxis("Horizontal");
 
-        // 假設每跑 100 公尺，速度就增加 0.5
-        float extraSpeed = (distance / 100f) * 0.5f; 
-        
-        // 最終的衝刺速度 = 初始速度 + 額外獲得的速度
-        float currentSpeed = forwardSpeed + extraSpeed; 
+        // 2. 計算這一幀的移動向量
+        // Vector3.forward * forwardSpeed -> 自動往前跑
+        // Vector3.right * horizontalInput * horizontalSpeed -> 玩家控制左右
+        Vector3 movement = (Vector3.forward * forwardSpeed) + (Vector3.right * horizontalInput * horizontalSpeed);
 
-        // 2. 移動邏輯
-        // 自動往前跑
-        transform.Translate(0, 0, currentSpeed * Time.deltaTime);
+        // 3. 套用移動
+        transform.Translate(movement * Time.deltaTime, Space.World);
 
-        // 左右移動
-        float h = Input.GetAxis("Horizontal");
-        transform.Translate(h * sideSpeed * Time.deltaTime, 0, 0);
+        // 4. 限制角色的 X 軸位置，防止玩家跑到跑道外面
+        float clampedX = Mathf.Clamp(transform.position.x, minX, maxX);
+        transform.position = new Vector3(clampedX, transform.position.y, transform.position.z);
 
-        // 3. 邊界防護
-        Vector3 currentPos = transform.position;
-        currentPos.x = Mathf.Clamp(currentPos.x, -limitX, limitX);
-        
-        // 最後，把修改好的座標，正式還給方塊
-        transform.position = currentPos;
+        // 5. 將移動數據傳給動畫控制器 (《箭箭劍》直跑 vertical 傳 1.0f)
+        if (animController != null)
+        {
+            animController.UpdateMovementAnimation(horizontalInput, 1.0f);
+        }
+    }
+
+    // 提供一個公開方法，讓其他腳本（如果需要）知道目前的輸入值
+    public float GetCurrentHorizontalInput()
+    {
+        return horizontalInput;
     }
 }

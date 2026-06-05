@@ -59,8 +59,9 @@ public class TreasureChest : MonoBehaviour
                 case 5:
                     if (moveScript != null)
                     {
-                        moveScript.sideSpeed += moveSpeedBonus;
-                        if (moveScript.sideSpeed > 12f) moveScript.sideSpeed = 12f;
+                        // 🛠️ 修正處：將原本的 sideSpeed 全部替換為 horizontalSpeed
+                        moveScript.horizontalSpeed += moveSpeedBonus;
+                        if (moveScript.horizontalSpeed > 12f) moveScript.horizontalSpeed = 12f;
                     }
                     break;
             }

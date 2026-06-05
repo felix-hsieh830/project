@@ -1,80 +1,36 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class ArrowFly : MonoBehaviour
 {
-    public float speed = 15f;
-    private float totalSpeed;
-    private float finalDamage;
-    private float yawDegreesPerSecond = 0f;
+    [Header("箭矢飛行速度")]
+    public float speed = 20f;        // 箭矢往前飛的速度，可以調大一點
 
-    public void Setup(float playerDamage, float playerRange, float critRate, float critDamage, float inheritedSpeed, float flightSpeedMultiplier, float yawRate = 0f)
+    [Header("自動銷毀時間")]
+    public float lifeTime = 3f;      // 超過 3 秒沒射到東西就自動刪除，防止場景卡頓
+
+    void Start()
     {
-        if (Random.value <= critRate)
-        {
-            finalDamage = playerDamage * critDamage;
-            transform.localScale *= 1.8f;
-        }
-        else
-        {
-            finalDamage = playerDamage;
-        }
-
-        float baseSpeed = speed * flightSpeedMultiplier;
-        totalSpeed = baseSpeed + inheritedSpeed;
-
-        float finalRange = Mathf.Min(playerRange, 90f);
-        float lifeTime = finalRange / totalSpeed;
+        // 3秒後自動毀滅
         Destroy(gameObject, lifeTime);
-
-        yawDegreesPerSecond = yawRate;
     }
 
     void Update()
     {
-        if (yawDegreesPerSecond != 0f)
-        {
-            transform.Rotate(0f, yawDegreesPerSecond * Time.deltaTime, 0f);
-        }
-
-        float stepDistance = totalSpeed * Time.deltaTime;
-        RaycastHit hit;
-
-        if (Physics.Raycast(transform.position, transform.forward, out hit, stepDistance))
-        {
-            Enemy target = hit.collider.GetComponent<Enemy>();
-            if (target != null)
-            {
-                target.TakeDamage(finalDamage);
-                Destroy(gameObject);
-                return;
-            }
-            BossHealth boss = hit.collider.GetComponent<BossHealth>();
-            if (boss != null)
-            {
-                boss.TakeDamage(finalDamage);
-                Destroy(gameObject);
-                return;
-            }
-        }
-
-        transform.Translate(0, 0, stepDistance);
+        // 🌟 關鍵修正：讓箭矢順著「它自己的正前方 (Z軸)」全速前進
+        transform.Translate(Vector3.forward * speed * Time.deltaTime, Space.Self);
     }
 
+    // 順便幫你寫好撞到敵人的基本逻辑
     void OnTriggerEnter(Collider other)
     {
-        Enemy target = other.GetComponent<Enemy>();
-        if (target != null)
+        // 如果撞到敵人 (假設你的敵人身上掛有 Enemy 腳本)
+        if (other.CompareTag("Enemy") || other.GetComponent<Enemy>() != null)
         {
-            target.TakeDamage(finalDamage);
+            // 讓敵人扣血（這裡可以串你的傷害邏輯）
+            // other.GetComponent<Enemy>().TakeDamage(10); 
+
+            // 箭矢功成身退，銷毀自己
             Destroy(gameObject);
-            return;
-        }
-        BossHealth boss = other.GetComponent<BossHealth>();
-        if (boss != null)
-        {
-            boss.TakeDamage(finalDamage);
-            Destroy(gameObject);
-            return;
         }
     }
 }
