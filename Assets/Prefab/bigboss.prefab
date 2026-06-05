@@ -194,6 +194,8 @@ GameObject:
   - component: {fileID: 6111016204399709906}
   - component: {fileID: 7872090238627211687}
   - component: {fileID: -872226456152575067}
+  - component: {fileID: 4214992867333729288}
+  - component: {fileID: 2580894411674339037}
   m_Layer: 0
   m_Name: bigboss
   m_TagString: Untagged
@@ -311,3 +313,36 @@ MonoBehaviour:
   currentHp: 0
   isBigBoss: 1
   hpText: {fileID: 4801526096441847373}
+--- !u!114 &4214992867333729288
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8650953477767932515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 832f84e8ea0d89d4c8fd10be858d3354, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BigBossAI
+  moveSpeed: 4
+  limitX: 4
+  laserPrefab: {fileID: 9046283866469649881, guid: 4cba6c0c1dbc2c84c99739749153a4c4, type: 3}
+  fireRate: 1.5
+  minionPrefab: {fileID: 2886357501927858980, guid: 4a8c843d0920f48488cc1bedcc832702, type: 3}
+  summonRate: 3
+--- !u!114 &2580894411674339037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8650953477767932515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c31f8ecbaea06f4bab720e680622c47, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossProjectile
+  speed: 15
+  damage: 20
+  lifeTime: 4

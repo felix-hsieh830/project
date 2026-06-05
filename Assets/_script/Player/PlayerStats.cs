@@ -61,6 +61,7 @@ public class PlayerStats : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
+        FloatingTextSpawner.instance?.Spawn("-" + damage.ToString(), transform.position, Color.yellow);
         currentHp -= damage;
         UpdateHPUI();
 

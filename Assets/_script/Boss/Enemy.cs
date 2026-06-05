@@ -43,10 +43,11 @@ public class Enemy : MonoBehaviour
         transform.localPosition = new Vector3(randomX, transform.localPosition.y, randomZ);
     }
 
-    public void TakeDamage(float damage)
+    public virtual void TakeDamage(float damage)
     {
         if (isDead) return; // 已死亡，擋掉重複呼叫
 
+        FloatingTextSpawner.instance?.Spawn("-"+damage.ToString(), transform.position, Color.red);
         currentHp -= damage;
         UpdateHPUI();
 

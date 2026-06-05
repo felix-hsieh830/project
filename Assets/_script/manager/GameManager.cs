@@ -16,9 +16,6 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI btnCText;
     public GameObject buttonCObject;
 
-    // ==========================================
-    // 🌟 新增：暫停 UI (Pause Menu)
-    // ==========================================
     [Header("暫停 UI (Pause)")]
     public GameObject pausePanel;
     private bool isPaused = false;
@@ -30,7 +27,8 @@ public class GameManager : MonoBehaviour
     public float bossOffset = 10f;
 
     [Header("Boss 實體設定")]
-    public GameObject smallBossPrefab;
+    // 🌟 這裡改成陣列 (Array)，讓你可以放進去 3 隻（甚至以後更多隻）小 Boss！
+    public GameObject[] smallBossPrefabs;
     public GameObject bigBossPrefab;
     public float bossSpawnDistance = 55f;
 
@@ -44,22 +42,12 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        // ==========================================
-        // 🌟 新增：ESC 暫停偵測邏輯
-        // 防呆設計：只有在「沒有結算」且「沒有在選獎勵」的時候才能按暫停！
-        // ==========================================
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (!gameOverPanel.activeSelf && !rewardPanel.activeSelf)
             {
-                if (isPaused)
-                {
-                    ResumeGameFromPause(); // 如果已經暫停，就恢復
-                }
-                else
-                {
-                    PauseGame(); // 如果沒暫停，就暫停
-                }
+                if (isPaused) ResumeGameFromPause();
+                else PauseGame();
             }
         }
 
@@ -70,7 +58,7 @@ public class GameManager : MonoBehaviour
             if (playerDistance >= nextBossDistance - bossSpawnDistance)
             {
                 bossSpawnCount++;
-                bool isBigBoss = (bossSpawnCount % 3 == 0);
+                bool isBigBoss = (bossSpawnCount % 4 == 0);
                 float bossWorldZ = (nextBossDistance + bossOffset) + 35f;
 
                 Debug.Log($"🚩 進入 Boss 視線範圍！Boss 已在世界座標 {bossWorldZ} m 處提早降落等待！");
@@ -81,47 +69,39 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // 1. 暫停遊戲 (內部呼叫)
     private void PauseGame()
     {
         isPaused = true;
         pausePanel.SetActive(true);
-        Time.timeScale = 0f; // 時間暫停
+        Time.timeScale = 0f;
     }
 
-    // 2. 繼續遊戲 (可以綁在「繼續遊戲」按鈕上，或者再按一次 ESC)
     public void ResumeGameFromPause()
     {
         isPaused = false;
         pausePanel.SetActive(false);
-        Time.timeScale = 1f; // 恢復時間
+        Time.timeScale = 1f;
     }
 
-    // 3. 設定按鈕
     public void OpenSettings()
     {
-        // 這裡未來可以替換成打開 SettingPanel 的程式碼
         Debug.Log("打開設定介面！");
     }
 
-    // 4. 返回開始畫面
     public void ReturnToMainMenu()
     {
-        Time.timeScale = 1f; // ⚠️ 切換場景前一定要恢復時間，不然下個場景會卡住！
+        Time.timeScale = 1f;
         SceneManager.LoadScene(0);
     }
 
-    // 5. 退出遊戲
     public void QuitGame()
     {
         Debug.Log("退出遊戲！");
-        Application.Quit(); // 打包成電腦版後才會生效，在 Unity 編輯器裡按了只會印出 Log
+        Application.Quit();
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #endif
     }
-
-
 
     public void ShowGameOver(int distance, int kills)
     {
@@ -129,15 +109,9 @@ public class GameManager : MonoBehaviour
         finalDistanceText.text = "最終距離: " + FormatNumber(distance) + " m";
         finalKillText.text = "總擊殺數: " + FormatNumber(kills);
         int bestDistance = PlayerPrefs.GetInt("BestDistance", 0);
-        if (distance > bestDistance)
-        {
-            PlayerPrefs.SetInt("BestDistance", distance);
-        }
+        if (distance > bestDistance) PlayerPrefs.SetInt("BestDistance", distance);
         int bestKills = PlayerPrefs.GetInt("BestKills", 0);
-        if (kills > bestKills)
-        {
-            PlayerPrefs.SetInt("BestKills", kills);
-        }
+        if (kills > bestKills) PlayerPrefs.SetInt("BestKills", kills);
         PlayerPrefs.Save();
 
         Time.timeScale = 0f;
@@ -209,10 +183,23 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("⚠️ 準備戰鬥！小 Boss 出現！");
-            spawnedBoss = Instantiate(smallBossPrefab, spawnPos, Quaternion.identity);
-            BossHealth bossScript = spawnedBoss.GetComponent<BossHealth>();
-            if (bossScript != null) bossScript.SetupHealth(currentEnemyHpAtThisPosition * 2f);
+            // 防呆：確保陣列裡有放東西，才不會報錯
+            if (smallBossPrefabs != null && smallBossPrefabs.Length > 0)
+            {
+                Debug.Log("⚠️ 準備戰鬥！小 Boss 出現！");
+
+                // 🌟 核心邏輯：從 0 到「陣列長度」之間隨機抽一個數字
+                int randomIndex = Random.Range(0, smallBossPrefabs.Length);
+                GameObject selectedBossPrefab = smallBossPrefabs[randomIndex];
+
+                spawnedBoss = Instantiate(selectedBossPrefab, spawnPos, Quaternion.identity);
+                BossHealth bossScript = spawnedBoss.GetComponent<BossHealth>();
+                if (bossScript != null) bossScript.SetupHealth(currentEnemyHpAtThisPosition * 2f);
+            }
+            else
+            {
+                Debug.LogError("❌ GameManager 裡面沒有放小 Boss 的 Prefab！請到 Inspector 設定！");
+            }
         }
     }
 }

@@ -5,7 +5,7 @@ public class PlayerAnimatorController : MonoBehaviour
     [Header("組件引用")]
     public Animator animator;
 
-    void Start()
+    void Awake()
     {
         if (animator == null)
             animator = GetComponent<Animator>();
@@ -18,9 +18,11 @@ public class PlayerAnimatorController : MonoBehaviour
     /// <param name="vertical">前後移動輸入：0 代表原地、1 代表向前跑（《箭箭劍》通常持續傳入 1）</param>
     public void UpdateMovementAnimation(float horizontal, float vertical)
     {
-        if (animator == null) return;
-
-        // 傳遞參數給混合樹，Unity 會自動融合 Idle、前跑、左移、右移的動作
+        if (animator == null)
+        {
+            Debug.LogError("animator 是 null！");
+            return;
+        }
         animator.SetFloat("SpeedX", horizontal);
         animator.SetFloat("SpeedY", vertical);
     }
@@ -33,6 +35,7 @@ public class PlayerAnimatorController : MonoBehaviour
         if (animator == null) return;
 
         // 觸發 Shoot 參數，讓上半身獨立執行拉弓、放箭的流程
+        animator.ResetTrigger("Shoot");
         animator.SetTrigger("Shoot");
     }
     /// <summary>

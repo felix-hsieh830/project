@@ -1,0 +1,146 @@
+using UnityEngine;
+using TMPro;
+using System.Collections; // 🌟 記得加這行才能用時間等待魔法
+
+public class BossHealth : MonoBehaviour
+{
+    [Header("Boss 數值設定")]
+    public float hp = 1000f;
+    public float currentHp;
+    public bool isBigBoss = false;
+
+    [Header("UI 顯示")]
+    public TextMeshPro hpText;
+
+    private bool isDead = false;
+    public bool isInvincible = false; // 🌟 新增：無敵狀態開關
+
+    public void SetupHealth(float newHP)
+    {
+        hp = newHP;
+        currentHp = hp;
+
+        // 🌟 新增防盲狙機制：只要是大 Boss，一出生就套上無敵護盾！
+        // 這樣牠在畫面外乖乖等你的時候，就不會被流彈打死了。
+        if (isBigBoss)
+        {
+            isInvincible = true;
+        }
+
+        UpdateHPUI(); 
+    }
+
+    void Update()
+    {
+        if (isBigBoss && !isDead)
+        {
+            PlayerMove playerMove = FindAnyObjectByType<PlayerMove>();
+            if (playerMove != null && !playerMove.isFightingBigBoss)
+            {
+                float distanceToPlayer = transform.position.z - playerMove.transform.position.z;
+
+                // 玩家抵達 20 公尺處
+                if (distanceToPlayer <= 20f && distanceToPlayer > 0)
+                {
+                    playerMove.isFightingBigBoss = true; // 強制玩家停車
+
+                    // 🌟 1. Boss 進入登場無敵狀態
+                    isInvincible = true;
+
+                    // 🌟 2. 呼叫攝影機往下沉
+                    if (Camera.main != null)
+                    {
+                        CameraFollow cam = Camera.main.GetComponent<CameraFollow>();
+                        if (cam != null) cam.SwitchToBossCamera();
+                    }
+
+                    // 🌟 3. 啟動登場倒數計時
+                    StartCoroutine(BossIntroRoutine());
+                }
+            }
+        }
+    }
+
+    // 🌟 登場過場動畫協程
+    IEnumerator BossIntroRoutine()
+    {
+        Debug.Log("🎥 大 Boss 登場運鏡中...無敵狀態！");
+
+        // 給攝影機 2.5 秒的時間運鏡，這段時間子彈打上來都無效
+        yield return new WaitForSeconds(2.5f);
+
+        isInvincible = false; // 解除無敵
+        Debug.Log("⚔️ 戰鬥正式開始！");
+    }
+
+    public void TakeDamage(float damage)
+    {
+        // 🌟 防護罩：如果正在無敵狀態，直接免疫傷害，不扣血！
+        if (isInvincible) return;
+
+        hp -= damage;
+        UpdateHPUI();
+
+        if (hp <= 0 && !isDead)
+        {
+            Die();
+        }
+    }
+
+    void UpdateHPUI()
+    {
+        if (hpText == null) return;
+        if (hp < 0) hp = 0;
+        hpText.text = Mathf.CeilToInt(hp).ToString();
+        if (isBigBoss) hpText.color = Color.red;
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (isDead) return;
+
+        PlayerStats player = other.GetComponentInParent<PlayerStats>();
+        if (player != null)
+        {
+            isDead = true;
+            int damageToPlayer = Mathf.RoundToInt(currentHp);
+            player.TakeDamage(damageToPlayer);
+
+            if (player.currentHp > 0)
+            {
+                if (isBigBoss)
+                {
+                    PlayerMove playerMove = player.GetComponent<PlayerMove>();
+                    if (playerMove != null) playerMove.isFightingBigBoss = false;
+
+                    // 🌟 撞死 Boss 也要把鏡頭拉回空中
+                    if (Camera.main != null) Camera.main.GetComponent<CameraFollow>()?.SwitchToNormalCamera();
+                }
+
+                // GameManager gm = FindAnyObjectByType<GameManager>();
+                // if (gm != null) gm.ShowReward(isBigBoss);
+            }
+            Destroy(gameObject);
+        }
+    }
+
+    private void Die()
+    {
+        isDead = true;
+
+        if (isBigBoss)
+        {
+            PlayerMove playerMove = FindAnyObjectByType<PlayerMove>();
+            if (playerMove != null)
+            {
+                playerMove.isFightingBigBoss = false;
+            }
+            // 🌟 擊殺 Boss，鏡頭緩緩升回高空
+            if (Camera.main != null) Camera.main.GetComponent<CameraFollow>()?.SwitchToNormalCamera();
+        }
+
+        GameManager gm = FindAnyObjectByType<GameManager>();
+        if (gm != null) gm.ShowReward(isBigBoss);
+        Destroy(gameObject);
+    }
+}

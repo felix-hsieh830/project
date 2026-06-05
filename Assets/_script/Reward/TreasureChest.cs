@@ -46,9 +46,11 @@ public class TreasureChest : MonoBehaviour
 
         if (stats != null)
         {
-            // ==========================================
+            // 🌟 修正飄字：直接抓寶箱上的字，並把換行(\n)換成空格
+            string floatingMsg = rewardText.text.Replace("\n", " ");
+            FloatingTextSpawner.instance?.Spawn(floatingMsg, transform.position, Color.green);
+
             // 🌟 撞到時，把剛剛 Start 裡記住的獎勵發給玩家
-            // ==========================================
             switch (selectedReward)
             {
                 case 0: stats.AddMaxHealth(hpBonus); break;
@@ -59,7 +61,6 @@ public class TreasureChest : MonoBehaviour
                 case 5:
                     if (moveScript != null)
                     {
-                        // 🛠️ 修正處：將原本的 sideSpeed 全部替換為 horizontalSpeed
                         moveScript.horizontalSpeed += moveSpeedBonus;
                         if (moveScript.horizontalSpeed > 12f) moveScript.horizontalSpeed = 12f;
                     }

@@ -136,8 +136,12 @@ public class BuffGate : MonoBehaviour
         PlayerStats stats = other.GetComponent<PlayerStats>();
         if (stats != null)
         {
-            // 🌟 碰到的瞬間立刻上鎖，就算同一個畫面撞到兩次也進不來了！
+            // 🌟 碰到的瞬間立刻上鎖
             hasTriggered = true;
+
+            // 🌟 修正飄字：直接抓大門上的字，並把換行(\n)換成空格
+            string floatingMsg = buffText.text.Replace("\n", " ");
+            FloatingTextSpawner.instance?.Spawn(floatingMsg, transform.position, Color.green);
 
             // 1. 玩家獲得能力加成
             switch (myBuffType)
