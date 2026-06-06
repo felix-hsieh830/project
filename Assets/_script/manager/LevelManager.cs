@@ -8,7 +8,7 @@ public class LevelManager : MonoBehaviour
     public Transform player;
 
     private float spawnZ = 0f;
-    public float trackLength = 10f;
+    public float trackLength = 30f;
 
     private List<GameObject> activeTracks = new List<GameObject>();
     private int maxTracksOnScreen = 5;
@@ -32,12 +32,13 @@ public class LevelManager : MonoBehaviour
 
     void Update()
     {
-        if (player.position.z > (spawnZ - maxTracksOnScreen * trackLength) + (trackLength * 2))
+        if (player.position.z > activeTracks[0].transform.position.z + trackLength * 2)
         {
-            SpawnTrack();    // 前面蓋一塊新的 (遊戲開始後蓋的都有怪)
-            DeleteTrack();   // 後面拆一塊舊的
+            DeleteTrack();
+            SpawnTrack();
         }
     }
+
 
     // 專門鋪安全地板的函數
     void SpawnSafeTrack()
@@ -48,7 +49,7 @@ public class LevelManager : MonoBehaviour
     }
 
     // 原本鋪危險地板的函數
-    void SpawnTrack()
+        void SpawnTrack()
     {
         GameObject newTrack = Instantiate(trackPrefab, new Vector3(0, 0, spawnZ), Quaternion.identity);
         activeTracks.Add(newTrack);
