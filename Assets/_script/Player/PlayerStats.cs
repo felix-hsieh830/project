@@ -17,72 +17,68 @@ public class PlayerStats : MonoBehaviour
     public float critRate = 0.1f;
     public float critDamage = 2.0f;
 
+    [Header("🌟 特殊天賦等級 (Boss獎勵)")]
+    public int lifestealLevel = 0;
+    public int collisionResistLevel = 0;
+    public int extraEnemies = 0;         // 🌟 改成這個：額外增加的怪物數量 (預設 0)
+    public int magnetLevel = 0;
+
     [Header("UI 顯示")]
-    public TextMeshPro hpText; // 🌟 用來裝主角頭頂文字的格子
+    public TextMeshPro hpText;
     public TextMeshProUGUI distanceText;
     public TextMeshProUGUI killText;
     public GameManager gameManager;
 
-    // 🌟 新增：紀錄殺怪數量
     private int killCount = 0;
 
     void Start()
     {
         currentHp = maxHp;
-        UpdateHPUI(); // 🌟 遊戲開始時立刻顯示血量
+        UpdateHPUI();
         if (killText != null) killText.text = "擊殺: 0";
     }
 
     void Update()
     {
-        // 把主角當前的 Z 軸座標當作距離 (無條件捨去小數點)
-        // 扣掉 30 是因為我們把前 30 公尺當作不計分的新手村！
         int distance = Mathf.FloorToInt(transform.position.z) - 30;
         if (distance < 0) distance = 0;
 
-        // 🌟 修改：用 FormatNumber 包裝距離數字！
         if (distanceText != null)
-        {
             distanceText.text = "距離: " + FormatNumber(distance) + " m";
-        }
     }
 
-
-    // 🌟 新增：專門給怪物呼叫的加分魔法
     public void AddKill()
     {
         killCount++;
-        // 🌟 修改：用 FormatNumber 包裝擊殺數字！
-        if (killText != null)
-        {
-            killText.text = "擊殺: " + FormatNumber(killCount);
-        }
+        if (killText != null) killText.text = "擊殺: " + FormatNumber(killCount);
+    }
+
+    public void Heal(int amount)
+    {
+        if (currentHp <= 0) return;
+        currentHp += amount;
+        if (currentHp > maxHp) currentHp = maxHp;
+        UpdateHPUI();
+        FloatingTextSpawner.instance?.Spawn("+" + amount.ToString(), transform.position + Vector3.up * 2f, Color.green);
     }
 
     public void TakeDamage(int damage)
     {
-        FloatingTextSpawner.instance?.Spawn("-" + damage.ToString(), transform.position, Color.yellow);
-        currentHp -= damage;
+        float damageReduction = 1f - (collisionResistLevel * 0.1f);
+        int finalDamage = Mathf.RoundToInt(damage * damageReduction);
+
+        FloatingTextSpawner.instance?.Spawn("-" + finalDamage.ToString(), transform.position + Vector3.up * 2f, Color.red);
+        currentHp -= finalDamage;
         UpdateHPUI();
 
         if (currentHp <= 0)
         {
-            // 🌟 死亡結算：算出當下距離
             int finalDistance = Mathf.FloorToInt(transform.position.z) - 30;
             if (finalDistance < 0) finalDistance = 0;
+            if (gameManager != null) gameManager.ShowGameOver(finalDistance, killCount);
 
-            // 🌟 呼叫總管顯示面板，並傳入最終距離與擊殺數！
-            if (gameManager != null)
-            {
-                gameManager.ShowGameOver(finalDistance, killCount);
-            }
             MonoBehaviour movementScript = GetComponent("CubeMovement") as MonoBehaviour;
-            if (movementScript != null)
-            {
-                movementScript.enabled = false; // 禁用移動腳本
-                Debug.Log("死掉啦！移動腳本已關閉！");
-            }
-
+            if (movementScript != null) movementScript.enabled = false;
             GetComponent<MeshRenderer>().enabled = false;
         }
     }
@@ -91,33 +87,21 @@ public class PlayerStats : MonoBehaviour
     {
         maxHp += amount;
         currentHp += amount;
-
-        // 🌟 最關鍵的一行：數字改完之後，一定要呼叫這個魔法刷新 3D 文字！
         UpdateHPUI();
-
-        Debug.Log("吃到血包了！最大生命增加 " + amount + "。目前血量：" + currentHp);
     }
 
-    // 🌟 新增：純數字血量更新魔法
     void UpdateHPUI()
     {
-        if (hpText == null) return; // 防呆
+        if (hpText == null) return;
         if (currentHp < 0) currentHp = 0;
-
-        // 🌟 修改：用 FormatNumber 包裝血量數字，變成超酷的 1K 顯示法！
         hpText.text = FormatNumber(currentHp);
     }
 
-    // ==========================================
-    // 🌟 數字縮寫轉換機 (將大數字轉成 K, M, B)
-    // 直接複製一份過來給 UI 即時更新使用！
-    // ==========================================
     public string FormatNumber(float number)
     {
         if (number >= 1000000000) return (number / 1000000000f).ToString("0.##") + "B";
         else if (number >= 1000000) return (number / 1000000f).ToString("0.##") + "M";
         else if (number >= 1000) return (number / 1000f).ToString("0.##") + "K";
-
         return Mathf.FloorToInt(number).ToString();
     }
 }

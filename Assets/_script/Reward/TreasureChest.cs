@@ -1,5 +1,5 @@
 using UnityEngine;
-using TMPro; // 🌟 記得加這行才能控制文字
+using TMPro;
 
 public class TreasureChest : MonoBehaviour
 {
@@ -12,21 +12,18 @@ public class TreasureChest : MonoBehaviour
     public float moveSpeedBonus = 0.5f;
 
     [Header("UI 顯示")]
-    public TextMeshPro rewardText; // 🌟 用來裝 3D 文字的格子
+    public TextMeshPro rewardText;
 
-    private int selectedReward; // 🌟 記憶體：記住這個寶箱抽到什麼
+    private int selectedReward;
+    private PlayerStats player; // 🌟 為了磁鐵功能抓取玩家
 
     void Start()
     {
-        // ==========================================
-        // 🌟 改變邏輯：在生出來的瞬間，就決定好獎勵！
-        // ==========================================
         selectedReward = Random.Range(0, 6);
+        player = FindAnyObjectByType<PlayerStats>();
 
         if (rewardText != null)
         {
-            // 根據抽到的數字，把對應的文字寫在寶箱頭上！
-            // "\n" 是換行的意思，可以讓排版更漂亮
             switch (selectedReward)
             {
                 case 0: rewardText.text = "最大生命\n+" + hpBonus; break;
@@ -39,6 +36,22 @@ public class TreasureChest : MonoBehaviour
         }
     }
 
+    void Update()
+    {
+        // 🌟 實裝金幣磁鐵功能
+        if (player != null && player.magnetLevel > 0)
+        {
+            float magnetRadius = player.magnetLevel * 5f;
+            float distance = Vector3.Distance(transform.position, player.transform.position);
+
+            // 如果在吸附範圍內，就用 MoveTowards 魔法飛向主角！
+            if (distance <= magnetRadius)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, player.transform.position, 15f * Time.deltaTime);
+            }
+        }
+    }
+
     void OnTriggerEnter(Collider other)
     {
         PlayerStats stats = other.GetComponent<PlayerStats>();
@@ -46,11 +59,9 @@ public class TreasureChest : MonoBehaviour
 
         if (stats != null)
         {
-            // 🌟 修正飄字：直接抓寶箱上的字，並把換行(\n)換成空格
             string floatingMsg = rewardText.text.Replace("\n", " ");
             FloatingTextSpawner.instance?.Spawn(floatingMsg, transform.position, Color.green);
 
-            // 🌟 撞到時，把剛剛 Start 裡記住的獎勵發給玩家
             switch (selectedReward)
             {
                 case 0: stats.AddMaxHealth(hpBonus); break;
@@ -66,8 +77,6 @@ public class TreasureChest : MonoBehaviour
                     }
                     break;
             }
-            
-            // 獎勵給完，銷毀寶箱
             Destroy(gameObject);
         }
     }

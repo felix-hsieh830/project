@@ -13,61 +13,63 @@ public class Enemy : MonoBehaviour
     [Header("掉落設定")]
     public GameObject chestPrefab;
 
-    private bool isDead = false; // 防止同幀多次觸發死亡
+    private bool isDead = false;
+    public bool isClone = false;
 
     void Start()
     {
-        // 1. 新手保護機制 (Z < 30 不生怪)
         if (transform.position.z < 30f)
         {
             Destroy(gameObject);
             return;
         }
 
-        float scalingDistance = transform.position.z - 30f; 
-        if (scalingDistance < 0) scalingDistance = 0; // 防呆，確保距離不會是負數
+        PlayerStats player = FindAnyObjectByType<PlayerStats>();
 
+        // 🌟 改成固定數量加一的迴圈邏輯
+        if (!isClone && player != null && player.extraEnemies > 0)
+        {
+            for (int i = 0; i < player.extraEnemies; i++)
+            {
+                Vector3 spawnOffset = new Vector3(Random.Range(-3f, 3f), 0, Random.Range(-3f, 3f));
+                GameObject clone = Instantiate(gameObject, transform.position + spawnOffset, Quaternion.identity);
+                clone.GetComponent<Enemy>().isClone = true;
+            }
+        }
+
+        float scalingDistance = Mathf.Max(0, transform.position.z - 30f);
         float stage = Mathf.Floor(scalingDistance / 40f);
-
-        // 階段 0 的時候，倍率就是乾乾淨淨的 1f！
-        float scaleFactor = Mathf.Pow(1.1f, stage);
-
-        maxHp = Mathf.Round(maxHp * scaleFactor);
-
+        maxHp = Mathf.Round(maxHp * Mathf.Pow(1.1f, stage));
         currentHp = maxHp;
         UpdateHPUI();
 
-        // 左右與前後隨機座標 (保持不變)
-        float randomX = (Random.Range(0, 2) == 0) ? -2.5f : 2.5f;
-        float randomZ = transform.localPosition.z + Random.Range(-5f, 5f);
-        transform.localPosition = new Vector3(randomX, transform.localPosition.y, randomZ);
+        if (!isClone)
+        {
+            float randomX = (Random.Range(0, 2) == 0) ? -2.5f : 2.5f;
+            float randomZ = transform.localPosition.z + Random.Range(-5f, 5f);
+            transform.localPosition = new Vector3(randomX, transform.localPosition.y, randomZ);
+        }
     }
 
     public virtual void TakeDamage(float damage)
     {
-        if (isDead) return; // 已死亡，擋掉重複呼叫
+        if (isDead) return;
 
-        FloatingTextSpawner.instance?.Spawn("-"+damage.ToString(), transform.position, Color.red);
+        FloatingTextSpawner.instance?.Spawn("-" + Mathf.RoundToInt(damage), transform.position, Color.red);
         currentHp -= damage;
         UpdateHPUI();
 
         if (currentHp <= 0)
         {
-            isDead = true; // 立刻鎖上，防止同幀第二次進來
-
+            isDead = true;
             PlayerStats player = FindAnyObjectByType<PlayerStats>();
-            if (player != null)
-            {
-                player.AddKill();
-            }
+            if (player != null) player.AddKill();
 
             if (chestPrefab != null)
             {
-                Vector3 dropPos = new Vector3(transform.position.x-0.75f, -0.45f, transform.position.z);
-                Quaternion chestRotation = Quaternion.Euler(0, 180f, 0);
-                Instantiate(chestPrefab, dropPos, chestRotation);
+                Vector3 dropPos = new Vector3(transform.position.x - 0.75f, -0.45f, transform.position.z);
+                Instantiate(chestPrefab, dropPos, Quaternion.Euler(0, 180f, 0));
             }
-
             Destroy(gameObject);
         }
     }
@@ -81,17 +83,12 @@ public class Enemy : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (isDead) return; // 同樣的保護
-
+        if (isDead) return;
         PlayerStats player = other.GetComponent<PlayerStats>();
-
         if (player != null)
         {
-            isDead = true; // 鎖上
-
-            int damageToPlayer = Mathf.RoundToInt(currentHp);
-            player.TakeDamage(damageToPlayer);
-
+            isDead = true;
+            player.TakeDamage(Mathf.RoundToInt(currentHp));
             Destroy(gameObject);
         }
     }

@@ -362,13 +362,40 @@ MonoBehaviour:
   - {fileID: 2807449429036958551, guid: f0c16f0ea935ea64297ca1d4d55d9746, type: 3}
   - {fileID: 9069115365609291303, guid: 60f79905accf3b24fa0114b941f1aac0, type: 3}
   trackRenderer: {fileID: 6053416734329126378}
-  countPerSide: 15
-  sideOffsetMin: 7
-  sideOffsetMax: 9
+  countPerSide: 20
+  sideOffsetMin: 8
+  sideOffsetMax: 11
   zRangeMin: 0
   zRangeMax: 30
   scaleMin: 1
   scaleMax: 3
+  innerDecorPrefabs:
+  - {fileID: 38335279662140195, guid: 34d3f526198dae440bb2ce6005d86055, type: 3}
+  - {fileID: 5186735023776687486, guid: ac8efb728f1fb9b4092c4df591c827ca, type: 3}
+  - {fileID: 3899520030806763256, guid: 299e7a1cb6456cf4fa6079cf5978df9b, type: 3}
+  - {fileID: 8903058273634794869, guid: f1fc5bb90ac285e4486771552d63bcb8, type: 3}
+  - {fileID: 3356751432538110193, guid: ffbddc4ef9676cc419e81e06aaa836d8, type: 3}
+  - {fileID: 4385080170328260021, guid: ff62b58c5a9ea164fa8ddf8038e10cd1, type: 3}
+  - {fileID: 5440707293445505367, guid: 494f6d43e170e9145bc7865d243ee00b, type: 3}
+  innerCountPerSide: 15
+  innerOffsetMin: 0
+  innerOffsetMax: 4.5
+  innerScaleMin: 0.8
+  innerScaleMax: 1.4
+  fencePrefab: {fileID: 5959178918153061033, guid: a6105fc98b9ec774fa5c18a2b9b071de, type: 3}
+  fenceSpacing: 4.5
+  fenceSideOffset: 5
+  wallPrefabs:
+  - {fileID: 3669657689831181937, guid: b7e72b2b99e757143846e12dc66116f2, type: 3}
+  wallCountPerSide: 5
+  wallOffsetMin: 12
+  wallOffsetMax: 12
+  wallScaleMin: 1.5
+  wallScaleMax: 1.5
+  waterMaterial: {fileID: 2100000, guid: bf8747ee04f43224ebc3649cbbbf5ffb, type: 2}
+  waterSideOffset: 37
+  waterWidth: 50
+  waterYOffset: -0.5
 --- !u!1 &1922482610812441013
 GameObject:
   m_ObjectHideFlags: 0
@@ -431,7 +458,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -7257241616351897397, guid: cb897d781c3805c4fbdd0e6b86fa9333, type: 2}
+  - {fileID: 8836712136923502643, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -477,8 +504,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Sample text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: cb897d781c3805c4fbdd0e6b86fa9333, type: 2}
-  m_sharedMaterial: {fileID: -7257241616351897397, guid: cb897d781c3805c4fbdd0e6b86fa9333, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
+  m_sharedMaterial: {fileID: 8836712136923502643, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -579,7 +606,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: -0.5, z: 0}
-  m_LocalScale: {x: 1.95, y: 1, z: 10}
+  m_LocalScale: {x: 2.5, y: 1, z: 10}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2825773741805791539}
@@ -725,7 +752,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -7257241616351897397, guid: cb897d781c3805c4fbdd0e6b86fa9333, type: 2}
+  - {fileID: 8836712136923502643, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -771,8 +798,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Sample text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: cb897d781c3805c4fbdd0e6b86fa9333, type: 2}
-  m_sharedMaterial: {fileID: -7257241616351897397, guid: cb897d781c3805c4fbdd0e6b86fa9333, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
+  m_sharedMaterial: {fileID: 8836712136923502643, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

@@ -25,6 +25,24 @@ public class PlayerMove : MonoBehaviour
 
     void Update()
     {
+        float touchInput = 0f;
+
+        // 觸控支援
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+            if (touch.position.x < Screen.width / 2f)
+                touchInput = -1f;
+            else
+                touchInput = 1f;
+        }
+
+        // 鍵盤輸入（AD + 方向鍵）
+        float keyInput = Input.GetAxisRaw("Horizontal");
+
+        // 合併輸入，觸控優先
+        horizontalInput = (Input.touchCount > 0) ? touchInput : keyInput;
+
         float distance = transform.position.z;
         if (distance < 0) distance = 0;
 

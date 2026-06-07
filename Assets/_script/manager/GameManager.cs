@@ -1,33 +1,29 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
-    [Header("結算 UI (Game Over)")]
+    [Header("結算 UI")]
     public GameObject gameOverPanel;
     public TextMeshProUGUI finalDistanceText;
     public TextMeshProUGUI finalKillText;
 
-    [Header("Boss 獎勵 UI (Rewards)")]
+    [Header("Boss 獎勵 UI")]
     public GameObject rewardPanel;
     public TextMeshProUGUI btnAText;
     public TextMeshProUGUI btnBText;
     public TextMeshProUGUI btnCText;
     public GameObject buttonCObject;
 
-    [Header("暫停 UI (Pause)")]
+    [Header("暫停與生成")]
     public GameObject pausePanel;
     private bool isPaused = false;
-
-    [Header("Boss 生成設定 (以距離為準)")]
     public float nextBossDistance = 450f;
     public float bossInterval = 450f;
     private int bossSpawnCount = 0;
     public float bossOffset = 10f;
-
-    [Header("Boss 實體設定")]
-    // 🌟 這裡改成陣列 (Array)，讓你可以放進去 3 隻（甚至以後更多隻）小 Boss！
     public GameObject[] smallBossPrefabs;
     public GameObject bigBossPrefab;
     public float bossSpawnDistance = 55f;
@@ -35,6 +31,10 @@ public class GameManager : MonoBehaviour
     private bool isBigBossReward = false;
     private PlayerStats playerStats;
     private bool isSpawning = false;
+
+    // 🌟 這裡改成 EnemyPlusOne
+    public enum RewardType { Light, Heavy, Multi, BigAtk, BigSpd, Lifesteal, Resist, EnemyPlusOne, Magnet }
+    private List<RewardType> currentOptions = new List<RewardType>();
 
     void Start()
     {
@@ -52,86 +52,45 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if (playerStats != null && !isSpawning) // 🌟 檢查鎖
+        if (playerStats != null && !isSpawning)
         {
             float playerDistance = playerStats.transform.position.z - 30f;
-
             if (playerDistance >= nextBossDistance - bossSpawnDistance)
             {
-                isSpawning = true; // 🌟 鎖上！
-
+                isSpawning = true;
                 bossSpawnCount++;
                 bool isBigBoss = (bossSpawnCount % 4 == 0);
                 float bossWorldZ = (nextBossDistance + bossOffset) + 35f;
-
-                Debug.Log($"🚩 進入 Boss 視線範圍！Boss 已在世界座標 {bossWorldZ} m 處提早降落等待！");
-
                 SpawnBoss(isBigBoss, bossWorldZ);
                 nextBossDistance += bossInterval;
-
-                // 🌟 給予一點延遲才解鎖，確保距離已經加上去，避免重複觸發
                 Invoke("ResetSpawnLock", 2.0f);
             }
         }
     }
 
-    private void ResetSpawnLock()
-    {
-        isSpawning = false;
-    }
-
-    private void PauseGame()
-    {
-        isPaused = true;
-        pausePanel.SetActive(true);
-        Time.timeScale = 0f;
-    }
-
-    public void ResumeGameFromPause()
-    {
-        isPaused = false;
-        pausePanel.SetActive(false);
-        Time.timeScale = 1f;
-    }
-
-    public void OpenSettings()
-    {
-        Debug.Log("打開設定介面！");
-    }
-
-    public void ReturnToMainMenu()
-    {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(0);
-    }
-
-    public void QuitGame()
-    {
-        Debug.Log("退出遊戲！");
-        Application.Quit();
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#endif
-    }
+    private void ResetSpawnLock() { isSpawning = false; }
+    private void PauseGame() { isPaused = true; pausePanel.SetActive(true); Time.timeScale = 0f; }
+    public void ResumeGameFromPause() { isPaused = false; pausePanel.SetActive(false); Time.timeScale = 1f; }
+    public void ReturnToMainMenu() { Time.timeScale = 1f; SceneManager.LoadScene(0); }
+    public void QuitGame() { Application.Quit(); }
 
     public void ShowGameOver(int distance, int kills)
     {
         gameOverPanel.SetActive(true);
         finalDistanceText.text = "最終距離: " + FormatNumber(distance) + " m";
         finalKillText.text = "總擊殺數: " + FormatNumber(kills);
-        int bestDistance = PlayerPrefs.GetInt("BestDistance", 0);
-        if (distance > bestDistance) PlayerPrefs.SetInt("BestDistance", distance);
-        int bestKills = PlayerPrefs.GetInt("BestKills", 0);
-        if (kills > bestKills) PlayerPrefs.SetInt("BestKills", kills);
+        int bestDist = PlayerPrefs.GetInt("BestDistance", 0);
+        if (distance > bestDist) PlayerPrefs.SetInt("BestDistance", distance);
+        int bestKill = PlayerPrefs.GetInt("BestKills", 0);
+        if (kills > bestKill) PlayerPrefs.SetInt("BestKills", kills);
         PlayerPrefs.Save();
-
         Time.timeScale = 0f;
     }
 
     public void RestartGame()
     {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        Time.timeScale = 1f; // 記得把時間恢復流動
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name); // 重新讀取當前場景
     }
 
     public void ShowReward(bool isBigBoss)
@@ -139,31 +98,92 @@ public class GameManager : MonoBehaviour
         isBigBossReward = isBigBoss;
         rewardPanel.SetActive(true);
         Time.timeScale = 0f;
+        GenerateRewards();
+    }
+
+    public void RefreshRewards()
+    {
+        GenerateRewards();
+    }
+
+    private void GenerateRewards()
+    {
+        List<RewardType> pool = new List<RewardType>();
 
         if (!isBigBossReward)
         {
-            buttonCObject.SetActive(true);
-            btnAText.text = "輕弩流派\n射速加快 (+50%)\n傷害降低 (-20%)";
-            btnBText.text = "重砲流派\n攻擊加痛 (+15)\n攻速變慢 (-20%)";
-            btnCText.text = "多重箭流派\n箭矢數量 +2\n傷害降低 (-50%)";
+            pool.Add(RewardType.Light); pool.Add(RewardType.Heavy); pool.Add(RewardType.Multi);
         }
         else
         {
-            buttonCObject.SetActive(false);
-            btnAText.text = "王牌力量\n攻擊力 x 2 倍 !!";
-            btnBText.text = "狂暴極速\n攻擊速度 x 2 倍 !!";
+            pool.Add(RewardType.BigAtk); pool.Add(RewardType.BigSpd);
+        }
+
+        if (playerStats.lifestealLevel < 3) pool.Add(RewardType.Lifesteal);
+        if (playerStats.collisionResistLevel < 3) pool.Add(RewardType.Resist);
+        pool.Add(RewardType.EnemyPlusOne); // 🌟 無上限，固定加一
+        if (playerStats.magnetLevel < 3) pool.Add(RewardType.Magnet);
+
+        for (int i = 0; i < pool.Count; i++)
+        {
+            RewardType temp = pool[i];
+            int randomIndex = Random.Range(i, pool.Count);
+            pool[i] = pool[randomIndex];
+            pool[randomIndex] = temp;
+        }
+
+        currentOptions.Clear();
+        buttonCObject.SetActive(true);
+
+        for (int i = 0; i < 3; i++)
+        {
+            if (i < pool.Count) currentOptions.Add(pool[i]);
+        }
+
+        if (currentOptions.Count > 0) UpdateButtonUI(btnAText, currentOptions[0]);
+        if (currentOptions.Count > 1) UpdateButtonUI(btnBText, currentOptions[1]);
+        if (currentOptions.Count > 2) UpdateButtonUI(btnCText, currentOptions[2]);
+    }
+
+    private void UpdateButtonUI(TextMeshProUGUI btnText, RewardType type)
+    {
+        switch (type)
+        {
+            case RewardType.Light: btnText.text = "輕弩流派\n射速加快(+50%)\n傷害降低(-20%)"; break;
+            case RewardType.Heavy: btnText.text = "重砲流派\n攻擊加痛(+15)\n攻速變慢(-20%)"; break;
+            case RewardType.Multi: btnText.text = "多重箭流派\n箭矢數量 +2\n傷害降低(-50%)"; break;
+            case RewardType.BigAtk: btnText.text = "王牌力量\n攻擊力 x 2倍 !!"; break;
+            case RewardType.BigSpd: btnText.text = "狂暴極速\n攻擊速度 x 2倍 !!"; break;
+            case RewardType.Lifesteal: btnText.text = $"吸血 Lv{playerStats.lifestealLevel + 1}\n傷害 {(playerStats.lifestealLevel + 1) * 5}% 轉為回血"; break;
+            case RewardType.Resist: btnText.text = $"堅若磐石 Lv{playerStats.collisionResistLevel + 1}\n撞擊減傷 {(playerStats.collisionResistLevel + 1) * 10}%"; break;
+            case RewardType.EnemyPlusOne: btnText.text = $"敵潮洶湧 (+{playerStats.extraEnemies + 1})\n怪物與掉落額外 +1!"; break; // 🌟 更新面板文字
+            case RewardType.Magnet: btnText.text = $"金幣磁鐵 Lv{playerStats.magnetLevel + 1}\n吸引半徑 {(playerStats.magnetLevel + 1) * 5}m"; break;
         }
     }
 
-    public void ChooseRewardA() { if (playerStats != null) { if (!isBigBossReward) { playerStats.attackSpeed += 1.5f; playerStats.baseDamage *= 0.8f; } else { playerStats.baseDamage *= 2f; } } ResumeGame(); }
-    public void ChooseRewardB() { if (playerStats != null) { if (!isBigBossReward) { playerStats.baseDamage += 15f; playerStats.attackSpeed *= 0.8f; } else { playerStats.attackSpeed *= 2f; } } ResumeGame(); }
-    public void ChooseRewardC() { if (playerStats != null) { if (!isBigBossReward) { playerStats.arrowCount += 2; playerStats.baseDamage *= 0.5f; } } ResumeGame(); }
+    public void ChooseRewardA() { ApplyReward(currentOptions[0]); ResumeGame(); }
+    public void ChooseRewardB() { ApplyReward(currentOptions[1]); ResumeGame(); }
+    public void ChooseRewardC() { ApplyReward(currentOptions[2]); ResumeGame(); }
 
-    private void ResumeGame()
+    private void ApplyReward(RewardType type)
     {
-        rewardPanel.SetActive(false);
-        Time.timeScale = 1f;
+        if (playerStats == null) return;
+
+        switch (type)
+        {
+            case RewardType.Light: playerStats.attackSpeed += 1.5f; playerStats.baseDamage *= 0.8f; break;
+            case RewardType.Heavy: playerStats.baseDamage += 15f; playerStats.attackSpeed *= 0.8f; break;
+            case RewardType.Multi: playerStats.arrowCount += 2; playerStats.baseDamage *= 0.5f; break;
+            case RewardType.BigAtk: playerStats.baseDamage *= 2f; break;
+            case RewardType.BigSpd: playerStats.attackSpeed *= 2f; break;
+            case RewardType.Lifesteal: playerStats.lifestealLevel++; break;
+            case RewardType.Resist: playerStats.collisionResistLevel++; break;
+            case RewardType.EnemyPlusOne: playerStats.extraEnemies++; break; // 🌟 每次拿到只加 1
+            case RewardType.Magnet: playerStats.magnetLevel++; break;
+        }
     }
+
+    private void ResumeGame() { rewardPanel.SetActive(false); Time.timeScale = 1f; }
 
     public string FormatNumber(float number)
     {
@@ -175,41 +195,25 @@ public class GameManager : MonoBehaviour
 
     private void SpawnBoss(bool isBigBoss, float targetZ)
     {
-        Transform playerTrans = playerStats.transform;
         Vector3 spawnPos = new Vector3(0, 1.5f, targetZ);
         float baseEnemyMaxHp = 50f;
-        float scalingDistance = spawnPos.z - 30f;
-        if (scalingDistance < 0) scalingDistance = 0;
+        float scalingDistance = Mathf.Max(0, spawnPos.z - 30f);
         float stage = Mathf.Floor(scalingDistance / 40f);
-        float scaleFactor = Mathf.Pow(1.1f, stage);
-        float currentEnemyHpAtThisPosition = Mathf.Round(baseEnemyMaxHp * scaleFactor);
+        float currentEnemyHp = Mathf.Round(baseEnemyMaxHp * Mathf.Pow(1.1f, stage));
         GameObject spawnedBoss = null;
 
         if (isBigBoss)
         {
-            Debug.Log("🔥 警告！大 Boss 即將降臨！");
             spawnedBoss = Instantiate(bigBossPrefab, spawnPos, Quaternion.identity);
-            BossHealth bossScript = spawnedBoss.GetComponent<BossHealth>();
-            if (bossScript != null) bossScript.SetupHealth(currentEnemyHpAtThisPosition * 5f);
+            if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * 5f);
         }
         else
         {
-            // 防呆：確保陣列裡有放東西，才不會報錯
             if (smallBossPrefabs != null && smallBossPrefabs.Length > 0)
             {
-                Debug.Log("⚠️ 準備戰鬥！小 Boss 出現！");
-
-                // 🌟 核心邏輯：從 0 到「陣列長度」之間隨機抽一個數字
                 int randomIndex = Random.Range(0, smallBossPrefabs.Length);
-                GameObject selectedBossPrefab = smallBossPrefabs[randomIndex];
-
-                spawnedBoss = Instantiate(selectedBossPrefab, spawnPos, Quaternion.identity);
-                BossHealth bossScript = spawnedBoss.GetComponent<BossHealth>();
-                if (bossScript != null) bossScript.SetupHealth(currentEnemyHpAtThisPosition * 2f);
-            }
-            else
-            {
-                Debug.LogError("❌ GameManager 裡面沒有放小 Boss 的 Prefab！請到 Inspector 設定！");
+                spawnedBoss = Instantiate(smallBossPrefabs[randomIndex], spawnPos, Quaternion.identity);
+                if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * 2f);
             }
         }
     }
