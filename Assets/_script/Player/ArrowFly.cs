@@ -10,12 +10,13 @@ public class ArrowFly : MonoBehaviour
     private float finalDamage;
     private float yawDegreesPerSecond = 0f;
     private bool isSetup = false;
+    private bool hasHit = false;
     private PlayerStats playerStats; // 🌟 抓取玩家狀態
 
-    public void Setup(float playerDamage, float playerRange, float critRate, float critDamage, float inheritedSpeed, float flightSpeedMultiplier, float yawRate = 0f)
+    public void Setup(float playerDamage, float playerRange, float critRate, float critDamage, float inheritedSpeed, float flightSpeedMultiplier, float yawRate = 0f, PlayerStats ownerStats = null)
     {
         isSetup = true;
-        playerStats = FindAnyObjectByType<PlayerStats>(); // 🌟 啟動時取得玩家天賦
+        playerStats = ownerStats != null ? ownerStats : FindAnyObjectByType<PlayerStats>(); // 🌟 啟動時取得玩家天賦
 
         if (Random.value <= critRate)
         {
@@ -59,27 +60,33 @@ public class ArrowFly : MonoBehaviour
     // 🌟 將碰撞邏輯整合，方便套用天賦
     private void HandleCollision(Collider hitCollider)
     {
+        if (hasHit) return;
+
         Enemy target = hitCollider.GetComponent<Enemy>();
         BossHealth boss = hitCollider.GetComponent<BossHealth>();
 
         if (target != null || boss != null)
         {
-            // 1. 結算吸血
-            if (playerStats != null && playerStats.lifestealLevel > 0)
-            {
-                float healAmount = finalDamage * (playerStats.lifestealLevel * 0.05f);
-                playerStats.Heal(Mathf.Max(1, Mathf.FloorToInt(healAmount))); // 至少回 1 滴
-            }
+            hasHit = true;
+            bool dealtDamage = false;
 
-            // 2. 結算毒素與傷害
             if (target != null)
             {
-                target.TakeDamage(finalDamage);
+                dealtDamage = target.TakeDamage(finalDamage);
             }
             else if (boss != null)
             {
-                boss.TakeDamage(finalDamage);
+                dealtDamage = boss.TakeDamage(finalDamage);
                 // (你可以選擇未來讓Boss也中標ApplyPoison，這邊先只做普怪)
+            }
+
+            if (playerStats == null) playerStats = FindAnyObjectByType<PlayerStats>();
+
+            if (dealtDamage && playerStats != null && playerStats.lifestealLevel > 0)
+            {
+                float damageForLifesteal = Mathf.Max(1f, finalDamage);
+                float healAmount = damageForLifesteal * (playerStats.lifestealLevel * 0.05f);
+                playerStats.Heal(Mathf.Max(1, Mathf.FloorToInt(healAmount))); // 至少回 1 滴
             }
 
             Destroy(gameObject); // 命中後銷毀箭矢

@@ -116,7 +116,7 @@ public class PlayerShoot : MonoBehaviour
             if (arrowScript != null)
             {
                 float finalBaseDamage = stats.baseDamage * totalDamageMultiplier;
-                arrowScript.Setup(finalBaseDamage, stats.attackRange, stats.critRate, stats.critDamage, currentPlayerZSpeed, flightSpeedMultiplier, yawRate);
+                arrowScript.Setup(finalBaseDamage, stats.attackRange, stats.critRate, stats.critDamage, currentPlayerZSpeed, flightSpeedMultiplier, yawRate, stats);
             }
         }
 

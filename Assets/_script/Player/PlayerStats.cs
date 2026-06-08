@@ -56,10 +56,16 @@ public class PlayerStats : MonoBehaviour
     public void Heal(int amount)
     {
         if (currentHp <= 0) return;
-        currentHp += amount;
-        if (currentHp > maxHp) currentHp = maxHp;
+
+        int hpBeforeHeal = currentHp;
+        currentHp = Mathf.Clamp(currentHp + amount, 0, maxHp);
+        int actualHeal = currentHp - hpBeforeHeal;
+
         UpdateHPUI();
-        FloatingTextSpawner.instance?.Spawn("+" + amount.ToString(), transform.position + Vector3.up * 2f, Color.green);
+        if (actualHeal > 0)
+        {
+            FloatingTextSpawner.instance?.Spawn("+" + actualHeal.ToString(), transform.position + Vector3.up * 2f, Color.green);
+        }
     }
 
     public void TakeDamage(int damage)
@@ -94,7 +100,9 @@ public class PlayerStats : MonoBehaviour
     {
         if (hpText == null) return;
         if (currentHp < 0) currentHp = 0;
-        hpText.text = FormatNumber(currentHp);
+        hpText.SetText(FormatNumber(currentHp));
+        hpText.ForceMeshUpdate();
+        Canvas.ForceUpdateCanvases();
     }
 
     public string FormatNumber(float number)

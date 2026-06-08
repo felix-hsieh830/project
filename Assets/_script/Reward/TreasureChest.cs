@@ -16,11 +16,13 @@ public class TreasureChest : MonoBehaviour
 
     private int selectedReward;
     private PlayerStats player; // 🌟 為了磁鐵功能抓取玩家
+    private PlayerMove playerMove;
 
     void Start()
     {
         selectedReward = Random.Range(0, 6);
         player = FindAnyObjectByType<PlayerStats>();
+        if (player != null) playerMove = player.GetComponent<PlayerMove>();
 
         if (rewardText != null)
         {
@@ -47,7 +49,9 @@ public class TreasureChest : MonoBehaviour
             // 如果在吸附範圍內，就用 MoveTowards 魔法飛向主角！
             if (distance <= magnetRadius)
             {
-                transform.position = Vector3.MoveTowards(transform.position, player.transform.position, 15f * Time.deltaTime);
+                float playerForwardSpeed = playerMove != null ? playerMove.forwardSpeed : 0f;
+                float magnetSpeed = 15f + playerForwardSpeed + (distance * 6f);
+                transform.position = Vector3.MoveTowards(transform.position, player.transform.position, magnetSpeed * Time.deltaTime);
             }
         }
     }

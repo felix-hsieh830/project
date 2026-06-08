@@ -75,9 +75,9 @@ public class BossHealth : MonoBehaviour
         Debug.Log("⚔️ 戰鬥正式開始！");
     }
 
-    public void TakeDamage(float damage)
+    public bool TakeDamage(float damage)
     {
-        if (isInvincible || isDead) return;
+        if (isInvincible || isDead) return false;
         currentHp -= damage;
 
         UpdateHPUI(); // 更新血條 UI
@@ -86,6 +86,8 @@ public class BossHealth : MonoBehaviour
         {
             Die();
         }
+
+        return true;
     }
 
     void UpdateHPUI()

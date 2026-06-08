@@ -15,6 +15,9 @@ public class Enemy : MonoBehaviour
 
     private bool isDead = false;
     public bool isClone = false;
+    private int spawnedExtraEnemies = 0;
+    private bool hasInitializedHealth = false;
+    private bool skipInitialHpScaling = false;
 
     void Start()
     {
@@ -26,34 +29,100 @@ public class Enemy : MonoBehaviour
 
         PlayerStats player = FindAnyObjectByType<PlayerStats>();
 
-        // 🌟 改成固定數量加一的迴圈邏輯
-        if (!isClone && player != null && player.extraEnemies > 0)
-        {
-            for (int i = 0; i < player.extraEnemies; i++)
-            {
-                Vector3 spawnOffset = new Vector3(Random.Range(-3f, 3f), 0, Random.Range(-3f, 3f));
-                GameObject clone = Instantiate(gameObject, transform.position + spawnOffset, Quaternion.identity);
-                clone.GetComponent<Enemy>().isClone = true;
-            }
-        }
-
-        float scalingDistance = Mathf.Max(0, transform.position.z - 30f);
-        float stage = Mathf.Floor(scalingDistance / 40f);
-        maxHp = Mathf.Round(maxHp * Mathf.Pow(1.1f, stage));
-        currentHp = maxHp;
-        UpdateHPUI();
-
         if (!isClone)
         {
             float randomX = (Random.Range(0, 2) == 0) ? -2.5f : 2.5f;
             float randomZ = transform.localPosition.z + Random.Range(-5f, 5f);
             transform.localPosition = new Vector3(randomX, transform.localPosition.y, randomZ);
+
+            if (player != null) EnsureExtraEnemyCount(player.extraEnemies);
+        }
+
+        if (!skipInitialHpScaling)
+        {
+            float scalingDistance = Mathf.Max(0, transform.position.z - 30f);
+            float stage = Mathf.Floor(scalingDistance / 40f);
+            maxHp = Mathf.Round(maxHp * Mathf.Pow(1.1f, stage));
+        }
+
+        currentHp = maxHp;
+        hasInitializedHealth = true;
+        UpdateHPUI();
+    }
+
+    public void EnsureExtraEnemyCount(int desiredCount)
+    {
+        if (isClone || desiredCount <= spawnedExtraEnemies) return;
+
+        int countToSpawn = desiredCount - spawnedExtraEnemies;
+        SpawnExtraEnemies(countToSpawn);
+        spawnedExtraEnemies = desiredCount;
+    }
+
+    public static void RefreshAllExtraEnemies(int desiredCount)
+    {
+        Enemy[] enemies = FindObjectsByType<Enemy>();
+        foreach (Enemy enemy in enemies)
+        {
+            enemy.EnsureExtraEnemyCount(desiredCount);
         }
     }
 
-    public virtual void TakeDamage(float damage)
+    public static void ClearAllExtraEnemies()
     {
-        if (isDead) return;
+        Enemy[] enemies = FindObjectsByType<Enemy>();
+        foreach (Enemy enemy in enemies)
+        {
+            if (enemy.isClone)
+            {
+                Destroy(enemy.gameObject);
+            }
+            else
+            {
+                enemy.spawnedExtraEnemies = 0;
+            }
+        }
+    }
+
+    private void SpawnExtraEnemies(int count)
+    {
+        Transform spawnParent = transform.parent;
+        Vector3 baseLocalPos = transform.localPosition;
+
+        for (int i = 0; i < count; i++)
+        {
+            int slotIndex = spawnedExtraEnemies + i;
+            float laneX = (slotIndex % 2 == 0) ? -baseLocalPos.x : baseLocalPos.x;
+            if (Mathf.Abs(laneX) < 1f) laneX = (slotIndex % 2 == 0) ? -2.5f : 2.5f;
+
+            float zOffset = 6f + (slotIndex / 2) * 4f + Random.Range(-1f, 1f);
+            if (slotIndex % 2 == 1) zOffset *= -1f;
+
+            Vector3 cloneLocalPos = new Vector3(laneX, baseLocalPos.y, baseLocalPos.z + zOffset);
+            cloneLocalPos.x = Mathf.Clamp(cloneLocalPos.x, -3.5f, 3.5f);
+
+            Vector3 cloneWorldPos = spawnParent != null ? spawnParent.TransformPoint(cloneLocalPos) : cloneLocalPos;
+            GameObject clone = Instantiate(gameObject, cloneWorldPos, transform.rotation, spawnParent);
+
+            Enemy cloneEnemy = clone.GetComponent<Enemy>();
+            if (cloneEnemy != null)
+            {
+                cloneEnemy.isClone = true;
+                cloneEnemy.skipInitialHpScaling = hasInitializedHealth;
+                if (hasInitializedHealth)
+                {
+                    cloneEnemy.maxHp = maxHp;
+                    cloneEnemy.currentHp = maxHp;
+                }
+                cloneEnemy.transform.localPosition = cloneLocalPos;
+                if (hasInitializedHealth) cloneEnemy.UpdateHPUI();
+            }
+        }
+    }
+
+    public virtual bool TakeDamage(float damage)
+    {
+        if (isDead) return false;
 
         FloatingTextSpawner.instance?.Spawn("-" + Mathf.RoundToInt(damage), transform.position, Color.red);
         currentHp -= damage;
@@ -72,6 +141,8 @@ public class Enemy : MonoBehaviour
             }
             Destroy(gameObject);
         }
+
+        return true;
     }
 
     void UpdateHPUI()

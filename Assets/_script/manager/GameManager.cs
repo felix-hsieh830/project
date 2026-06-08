@@ -95,6 +95,7 @@ public class GameManager : MonoBehaviour
 
     public void ShowReward(bool isBigBoss)
     {
+        EndEnemyPlusOneStage();
         isBigBossReward = isBigBoss;
         rewardPanel.SetActive(true);
         Time.timeScale = 0f;
@@ -103,6 +104,7 @@ public class GameManager : MonoBehaviour
 
     public void RefreshRewards()
     {
+        if (isBigBossReward) return;
         GenerateRewards();
     }
 
@@ -113,16 +115,17 @@ public class GameManager : MonoBehaviour
         if (!isBigBossReward)
         {
             pool.Add(RewardType.Light); pool.Add(RewardType.Heavy); pool.Add(RewardType.Multi);
+
+            if (playerStats.lifestealLevel < 3) pool.Add(RewardType.Lifesteal);
+            if (playerStats.collisionResistLevel < 3) pool.Add(RewardType.Resist);
+            pool.Add(RewardType.EnemyPlusOne); // 🌟 只影響下一段 Boss 距離
+            if (playerStats.magnetLevel < 3) pool.Add(RewardType.Magnet);
         }
         else
         {
-            pool.Add(RewardType.BigAtk); pool.Add(RewardType.BigSpd);
+            pool.Add(RewardType.BigAtk);
+            pool.Add(RewardType.BigSpd);
         }
-
-        if (playerStats.lifestealLevel < 3) pool.Add(RewardType.Lifesteal);
-        if (playerStats.collisionResistLevel < 3) pool.Add(RewardType.Resist);
-        pool.Add(RewardType.EnemyPlusOne); // 🌟 無上限，固定加一
-        if (playerStats.magnetLevel < 3) pool.Add(RewardType.Magnet);
 
         for (int i = 0; i < pool.Count; i++)
         {
@@ -133,9 +136,10 @@ public class GameManager : MonoBehaviour
         }
 
         currentOptions.Clear();
-        buttonCObject.SetActive(true);
+        buttonCObject.SetActive(!isBigBossReward);
 
-        for (int i = 0; i < 3; i++)
+        int optionCount = isBigBossReward ? 2 : 3;
+        for (int i = 0; i < optionCount; i++)
         {
             if (i < pool.Count) currentOptions.Add(pool[i]);
         }
@@ -143,6 +147,7 @@ public class GameManager : MonoBehaviour
         if (currentOptions.Count > 0) UpdateButtonUI(btnAText, currentOptions[0]);
         if (currentOptions.Count > 1) UpdateButtonUI(btnBText, currentOptions[1]);
         if (currentOptions.Count > 2) UpdateButtonUI(btnCText, currentOptions[2]);
+        else if (btnCText != null) btnCText.text = "";
     }
 
     private void UpdateButtonUI(TextMeshProUGUI btnText, RewardType type)
@@ -156,14 +161,19 @@ public class GameManager : MonoBehaviour
             case RewardType.BigSpd: btnText.text = "狂暴極速\n攻擊速度 x 2倍 !!"; break;
             case RewardType.Lifesteal: btnText.text = $"吸血 Lv{playerStats.lifestealLevel + 1}\n傷害 {(playerStats.lifestealLevel + 1) * 5}% 轉為回血"; break;
             case RewardType.Resist: btnText.text = $"堅若磐石 Lv{playerStats.collisionResistLevel + 1}\n撞擊減傷 {(playerStats.collisionResistLevel + 1) * 10}%"; break;
-            case RewardType.EnemyPlusOne: btnText.text = $"敵潮洶湧 (+{playerStats.extraEnemies + 1})\n怪物與掉落額外 +1!"; break; // 🌟 更新面板文字
+            case RewardType.EnemyPlusOne: btnText.text = $"敵潮洶湧\n下一段怪物額外 +1!"; break; // 🌟 只影響下一段 Boss 距離
             case RewardType.Magnet: btnText.text = $"金幣磁鐵 Lv{playerStats.magnetLevel + 1}\n吸引半徑 {(playerStats.magnetLevel + 1) * 5}m"; break;
         }
     }
 
     public void ChooseRewardA() { ApplyReward(currentOptions[0]); ResumeGame(); }
     public void ChooseRewardB() { ApplyReward(currentOptions[1]); ResumeGame(); }
-    public void ChooseRewardC() { ApplyReward(currentOptions[2]); ResumeGame(); }
+    public void ChooseRewardC()
+    {
+        if (currentOptions.Count <= 2) return;
+        ApplyReward(currentOptions[2]);
+        ResumeGame();
+    }
 
     private void ApplyReward(RewardType type)
     {
@@ -178,12 +188,23 @@ public class GameManager : MonoBehaviour
             case RewardType.BigSpd: playerStats.attackSpeed *= 2f; break;
             case RewardType.Lifesteal: playerStats.lifestealLevel++; break;
             case RewardType.Resist: playerStats.collisionResistLevel++; break;
-            case RewardType.EnemyPlusOne: playerStats.extraEnemies++; break; // 🌟 每次拿到只加 1
+            case RewardType.EnemyPlusOne:
+                playerStats.extraEnemies = 1;
+                Enemy.RefreshAllExtraEnemies(playerStats.extraEnemies);
+                break; // 🌟 只影響下一段 Boss 距離
             case RewardType.Magnet: playerStats.magnetLevel++; break;
         }
     }
 
     private void ResumeGame() { rewardPanel.SetActive(false); Time.timeScale = 1f; }
+
+    private void EndEnemyPlusOneStage()
+    {
+        if (playerStats == null || playerStats.extraEnemies <= 0) return;
+
+        playerStats.extraEnemies = 0;
+        Enemy.ClearAllExtraEnemies();
+    }
 
     public string FormatNumber(float number)
     {
