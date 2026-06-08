@@ -13,10 +13,13 @@ public class ArrowFly : MonoBehaviour
     private bool hasHit = false;
     private PlayerStats playerStats; // 🌟 抓取玩家狀態
 
-    public void Setup(float playerDamage, float playerRange, float critRate, float critDamage, float inheritedSpeed, float flightSpeedMultiplier, float yawRate = 0f, PlayerStats ownerStats = null)
+    public void Setup(float playerDamage, float playerRange, float critRate, float critDamage,
+                  float inheritedSpeed, float flightSpeedMultiplier, float yawRate = 0f,
+                  PlayerStats stats = null)
     {
         isSetup = true;
-        playerStats = ownerStats != null ? ownerStats : FindAnyObjectByType<PlayerStats>(); // 🌟 啟動時取得玩家天賦
+        playerStats = stats;
+        //playerStats = ownerStats != null ? ownerStats : FindAnyObjectByType<PlayerStats>(); // 🌟 啟動時取得玩家天賦
 
         if (Random.value <= critRate)
         {
@@ -68,28 +71,20 @@ public class ArrowFly : MonoBehaviour
         if (target != null || boss != null)
         {
             hasHit = true;
-            bool dealtDamage = false;
 
-            if (target != null)
-            {
-                dealtDamage = target.TakeDamage(finalDamage);
-            }
-            else if (boss != null)
-            {
-                dealtDamage = boss.TakeDamage(finalDamage);
-                // (你可以選擇未來讓Boss也中標ApplyPoison，這邊先只做普怪)
-            }
+            if (target != null) target.TakeDamage(finalDamage);
+            else if (boss != null) boss.TakeDamage(finalDamage);
 
             if (playerStats == null) playerStats = FindAnyObjectByType<PlayerStats>();
 
-            if (dealtDamage && playerStats != null && playerStats.lifestealLevel > 0)
+            // 直接觸發，不依賴 dealtDamage
+            if (playerStats != null && playerStats.lifestealLevel > 0)
             {
-                float damageForLifesteal = Mathf.Max(1f, finalDamage);
-                float healAmount = damageForLifesteal * (playerStats.lifestealLevel * 0.05f);
-                playerStats.Heal(Mathf.Max(1, Mathf.FloorToInt(healAmount))); // 至少回 1 滴
+                float healAmount = Mathf.Max(1f, finalDamage) * (playerStats.lifestealLevel * 0.05f);
+                playerStats.Heal(Mathf.Max(1, Mathf.FloorToInt(healAmount)));
             }
 
-            Destroy(gameObject); // 命中後銷毀箭矢
+            Destroy(gameObject);
         }
     }
 }

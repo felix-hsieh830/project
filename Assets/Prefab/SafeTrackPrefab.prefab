@@ -129,8 +129,8 @@ MonoBehaviour:
   wallOffsetMax: 12
   wallScaleMin: 1.5
   wallScaleMax: 1.5
-  waterMaterial: {fileID: 2100000, guid: bf8747ee04f43224ebc3649cbbbf5ffb, type: 2}
-  waterSideOffset: 37
+  waterMaterial: {fileID: 2100000, guid: 2a79c11045543504a8ac8b0b78fb1c72, type: 2}
+  waterSideOffset: 37.5
   waterWidth: 50
   waterYOffset: -0.5
 --- !u!1 &4347704508645028961
@@ -162,7 +162,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: -0.5, z: 0}
-  m_LocalScale: {x: 2.5, y: 1, z: 3}
+  m_LocalScale: {x: 2.55, y: 1, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2825773741805791539}

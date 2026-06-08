@@ -159,10 +159,10 @@ public class GameManager : MonoBehaviour
             case RewardType.Multi: btnText.text = "多重箭流派\n箭矢數量 +2\n傷害降低(-50%)"; break;
             case RewardType.BigAtk: btnText.text = "王牌力量\n攻擊力 x 2倍 !!"; break;
             case RewardType.BigSpd: btnText.text = "狂暴極速\n攻擊速度 x 2倍 !!"; break;
-            case RewardType.Lifesteal: btnText.text = $"吸血 Lv{playerStats.lifestealLevel + 1}\n傷害 {(playerStats.lifestealLevel + 1) * 5}% 轉為回血"; break;
+            case RewardType.Lifesteal: btnText.text = $"吸血 Lv{playerStats.lifestealLevel + 1}\n傷害 {(playerStats.lifestealLevel + 1) * 10}% 轉為回血"; break;
             case RewardType.Resist: btnText.text = $"堅若磐石 Lv{playerStats.collisionResistLevel + 1}\n撞擊減傷 {(playerStats.collisionResistLevel + 1) * 10}%"; break;
             case RewardType.EnemyPlusOne: btnText.text = $"敵潮洶湧\n下一段怪物額外 +1!"; break; // 🌟 只影響下一段 Boss 距離
-            case RewardType.Magnet: btnText.text = $"金幣磁鐵 Lv{playerStats.magnetLevel + 1}\n吸引半徑 {(playerStats.magnetLevel + 1) * 5}m"; break;
+            case RewardType.Magnet: btnText.text = $"金幣磁鐵 Lv{playerStats.magnetLevel + 1}\n吸引半徑 {(playerStats.magnetLevel + 1) * 3}m"; break;
         }
     }
 

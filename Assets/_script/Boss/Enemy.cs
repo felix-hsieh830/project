@@ -149,7 +149,7 @@ public class Enemy : MonoBehaviour
     {
         if (hpText == null) return;
         if (currentHp < 0) currentHp = 0;
-        hpText.text = Mathf.CeilToInt(currentHp).ToString();
+        hpText.text = FormatNumber(currentHp);
     }
 
     void OnTriggerEnter(Collider other)
@@ -162,5 +162,13 @@ public class Enemy : MonoBehaviour
             player.TakeDamage(Mathf.RoundToInt(currentHp));
             Destroy(gameObject);
         }
+    }
+
+    public string FormatNumber(float number)
+    {
+        if (number >= 1000000000) return (number / 1000000000f).ToString("0.#") + "B";
+        else if (number >= 1000000) return (number / 1000000f).ToString("0.#") + "M";
+        else if (number >= 1000) return (number / 1000f).ToString("0.#") + "K";
+        return Mathf.FloorToInt(number).ToString();
     }
 }
