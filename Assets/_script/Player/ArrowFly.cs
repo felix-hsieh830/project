@@ -1,11 +1,21 @@
 ﻿using UnityEngine;
 
+using System.Collections;
+
 public class ArrowFly : MonoBehaviour
 {
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private static readonly int ColorId = Shader.PropertyToID("_Color");
+    private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+
     [Header("箭矢飛行速度")]
     public float speed = 15f;
     public float lifeTime = 3f;
     public float minLifeTime = 0.12f;
+
+    [Header("箭矢外觀")]
+    public bool disableColorAnimator = true;
+    public float colorFadeDuration = 0.12f;
 
     private float totalSpeed;
     private float finalDamage;
@@ -13,6 +23,87 @@ public class ArrowFly : MonoBehaviour
     private bool isSetup = false;
     private bool hasHit = false;
     private PlayerStats playerStats;
+    private Coroutine colorFadeRoutine;
+
+    public void ApplyVisualColor(Color color)
+    {
+        ApplyVisualColor(color, color, false);
+    }
+
+    public void ApplyVisualColor(Color targetColor, Color startColor, bool animate)
+    {
+        ApplyVisualColor(targetColor, startColor, targetColor, startColor, animate);
+    }
+
+    public void ApplyVisualColor(Color targetColor, Color startColor, Color targetEmissionColor, Color startEmissionColor, bool animate)
+    {
+        StopColorAnimator();
+
+        if (colorFadeRoutine != null)
+        {
+            StopCoroutine(colorFadeRoutine);
+        }
+
+        if (animate && colorFadeDuration > 0f)
+        {
+            ApplyColorToRenderers(startColor, startEmissionColor);
+            colorFadeRoutine = StartCoroutine(FadeVisualColor(startColor, targetColor, startEmissionColor, targetEmissionColor));
+            return;
+        }
+
+        ApplyColorToRenderers(targetColor, targetEmissionColor);
+    }
+
+    private IEnumerator FadeVisualColor(Color startColor, Color targetColor, Color startEmissionColor, Color targetEmissionColor)
+    {
+        float elapsed = 0f;
+        while (elapsed < colorFadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / colorFadeDuration);
+            ApplyColorToRenderers(Color.Lerp(startColor, targetColor, t), Color.Lerp(startEmissionColor, targetEmissionColor, t));
+            yield return null;
+        }
+
+        ApplyColorToRenderers(targetColor, targetEmissionColor);
+        colorFadeRoutine = null;
+    }
+
+    private void StopColorAnimator()
+    {
+        if (!disableColorAnimator) return;
+
+        Animator[] animators = GetComponentsInChildren<Animator>(true);
+        for (int i = 0; i < animators.Length; i++)
+        {
+            if (animators[i] != null)
+            {
+                animators[i].enabled = false;
+            }
+        }
+    }
+
+    private void ApplyColorToRenderers(Color color)
+    {
+        ApplyColorToRenderers(color, color);
+    }
+
+    private void ApplyColorToRenderers(Color color, Color emissionColor)
+    {
+        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer targetRenderer = renderers[i];
+            if (targetRenderer == null) continue;
+
+            MaterialPropertyBlock block = new MaterialPropertyBlock();
+            targetRenderer.GetPropertyBlock(block);
+            block.SetColor(BaseColorId, color);
+            block.SetColor(ColorId, color);
+            block.SetColor(EmissionColorId, emissionColor);
+            targetRenderer.SetPropertyBlock(block);
+        }
+    }
 
     public void Setup(
         float playerDamage,

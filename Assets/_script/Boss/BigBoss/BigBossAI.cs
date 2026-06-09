@@ -9,7 +9,7 @@ public class BigBossAI : MonoBehaviour
 
     [Header("階段一：攻擊設定 (雷射)")]
     public GameObject laserPrefab;
-    public float fireRate = 1.5f;
+    public float fireRate = 0.9f;
     private float fireTimer = 0f;
 
     [Header("階段二：死靈召喚設定")]
@@ -99,7 +99,7 @@ public class BigBossAI : MonoBehaviour
     {
         if (laserPrefab != null)
         {
-            Vector3 spawnPos = transform.position + new Vector3(0, 1f, -1.5f);
+            Vector3 spawnPos = transform.position + new Vector3(0, 0.45f, -1.5f);
             
             // 假設原本只有寫 Instantiate(laserPrefab, ...);
             // 把它改成用迴圈一次射 5 發，帶有角度偏移 (扇形)
@@ -121,8 +121,19 @@ public class BigBossAI : MonoBehaviour
             Vector3 leftPos = transform.position + new Vector3(-2f, -1f, -3f);
             Vector3 rightPos = transform.position + new Vector3(2f, -1f, -3f);
 
-            Instantiate(minionPrefab, leftPos, Quaternion.identity);
-            Instantiate(minionPrefab, rightPos, Quaternion.identity);
+            DisableMinionChestDrop(Instantiate(minionPrefab, leftPos, Quaternion.identity));
+            DisableMinionChestDrop(Instantiate(minionPrefab, rightPos, Quaternion.identity));
+        }
+    }
+
+    private void DisableMinionChestDrop(GameObject minion)
+    {
+        if (minion == null) return;
+
+        Enemy enemy = minion.GetComponent<Enemy>();
+        if (enemy != null)
+        {
+            enemy.chestPrefab = null;
         }
     }
 }

@@ -15,9 +15,11 @@ public class PauseMenuUI : MonoBehaviour
 
     private GameObject pausePanel;
     private RectTransform panelRect;
+    private RectTransform statsPanelRect;
     private CanvasGroup canvasGroup;
     private RectTransform overlayRect;
     private float fittedScale = 1f;
+    private TextMeshProUGUI statsBodyText;
 
     // 顏色設定
     private Color overlayColor = new Color(0f, 0f, 0f, 0.76f);
@@ -26,6 +28,15 @@ public class PauseMenuUI : MonoBehaviour
     private Color titleColor = new Color(1f, 0.86f, 0.34f, 1f);
     private Color btnTextNormal = new Color(1f, 0.9f, 0.62f, 1f);
     private Color btnTextPressed = new Color(0.42f, 0.33f, 0.12f, 1f);
+    private Color statsLabelColor = new Color(0.9f, 0.78f, 0.48f, 1f);
+    private Color statsValueColor = new Color(0.96f, 0.92f, 0.82f, 1f);
+
+    private const float MenuWidth = 440f;
+    private const float MenuHeight = 620f;
+    private const float StatsWidth = 340f;
+    private const float ContentGap = 22f;
+    private const float ContentWidth = MenuWidth + ContentGap + StatsWidth;
+    private const float ContentHeight = MenuHeight;
 
     void Start()
     {
@@ -58,21 +69,32 @@ public class PauseMenuUI : MonoBehaviour
         Image overlayImage = pausePanel.AddComponent<Image>();
         overlayImage.color = overlayColor;
 
-        // === 內層選單卡片 ===
-        GameObject menuCard = new GameObject("MenuCard");
-        menuCard.transform.SetParent(pausePanel.transform, false);
+        // === 內層內容群組 ===
+        GameObject contentRoot = new GameObject("PauseContent");
+        contentRoot.transform.SetParent(pausePanel.transform, false);
 
-        panelRect = menuCard.AddComponent<RectTransform>();
-        panelRect.sizeDelta = new Vector2(440f, 620f);
+        panelRect = contentRoot.AddComponent<RectTransform>();
+        panelRect.sizeDelta = new Vector2(ContentWidth, ContentHeight);
         panelRect.anchorMin = new Vector2(0.5f, 0.5f);
         panelRect.anchorMax = new Vector2(0.5f, 0.5f);
         panelRect.pivot = new Vector2(0.5f, 0.5f);
         panelRect.anchoredPosition = Vector2.zero;
 
+        // === 左側選單卡片 ===
+        GameObject menuCard = new GameObject("MenuCard");
+        menuCard.transform.SetParent(contentRoot.transform, false);
+
+        RectTransform menuRect = menuCard.AddComponent<RectTransform>();
+        menuRect.sizeDelta = new Vector2(MenuWidth, MenuHeight);
+        menuRect.anchorMin = new Vector2(0.5f, 0.5f);
+        menuRect.anchorMax = new Vector2(0.5f, 0.5f);
+        menuRect.pivot = new Vector2(0.5f, 0.5f);
+        menuRect.anchoredPosition = new Vector2(-(StatsWidth + ContentGap) * 0.5f, 0f);
+
         Image bgImage = menuCard.AddComponent<Image>();
         bgImage.color = bgColor;
 
-        CreateBorder(menuCard.transform, new Vector2(440f, 620f), borderColor, 4f);
+        CreateBorder(menuCard.transform, new Vector2(MenuWidth, MenuHeight), borderColor, 4f);
 
         // CanvasGroup（動畫用）
         canvasGroup = pausePanel.AddComponent<CanvasGroup>();
@@ -99,6 +121,8 @@ public class PauseMenuUI : MonoBehaviour
         // === 底部裝飾線 ===
         CreateDivider(menuCard.transform, new Vector2(0f, -255f), new Vector2(340f, 3f));
 
+        CreateStatsPanel(contentRoot.transform);
+
         // 預設隱藏
         FitPanelToScreen();
         pausePanel.SetActive(false);
@@ -108,8 +132,8 @@ public class PauseMenuUI : MonoBehaviour
     {
         if (panelRect == null) return;
 
-        float availableWidth = 440f;
-        float availableHeight = 620f;
+        float availableWidth = ContentWidth;
+        float availableHeight = ContentHeight;
         if (overlayRect != null)
         {
             Rect rect = overlayRect.rect;
@@ -117,12 +141,67 @@ public class PauseMenuUI : MonoBehaviour
             if (rect.height > 1f) availableHeight = Mathf.Max(420f, rect.height - 80f);
         }
 
-        fittedScale = Mathf.Min(1f, availableWidth / 440f, availableHeight / 620f);
+        fittedScale = Mathf.Min(1f, availableWidth / ContentWidth, availableHeight / ContentHeight);
         panelRect.anchorMin = new Vector2(0.5f, 0.5f);
         panelRect.anchorMax = new Vector2(0.5f, 0.5f);
         panelRect.pivot = new Vector2(0.5f, 0.5f);
-        panelRect.sizeDelta = new Vector2(440f, 620f);
+        panelRect.sizeDelta = new Vector2(ContentWidth, ContentHeight);
         panelRect.anchoredPosition = Vector2.zero;
+    }
+
+    void CreateStatsPanel(Transform parent)
+    {
+        GameObject statsCard = new GameObject("StatsCard");
+        statsCard.transform.SetParent(parent, false);
+
+        statsPanelRect = statsCard.AddComponent<RectTransform>();
+        statsPanelRect.sizeDelta = new Vector2(StatsWidth, MenuHeight);
+        statsPanelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        statsPanelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        statsPanelRect.pivot = new Vector2(0.5f, 0.5f);
+        statsPanelRect.anchoredPosition = new Vector2((MenuWidth + ContentGap) * 0.5f, 0f);
+
+        Image bgImage = statsCard.AddComponent<Image>();
+        bgImage.color = new Color(0.12f, 0.09f, 0.04f, 0.96f);
+
+        CreateBorder(statsCard.transform, new Vector2(StatsWidth, MenuHeight), borderColor, 4f);
+        CreateDivider(statsCard.transform, new Vector2(0f, 260f), new Vector2(260f, 3f));
+
+        GameObject titleObj = new GameObject("StatsTitle");
+        titleObj.transform.SetParent(statsCard.transform, false);
+        RectTransform titleRect = titleObj.AddComponent<RectTransform>();
+        titleRect.sizeDelta = new Vector2(290f, 54f);
+        titleRect.anchorMin = new Vector2(0.5f, 0.5f);
+        titleRect.anchorMax = new Vector2(0.5f, 0.5f);
+        titleRect.anchoredPosition = new Vector2(0f, 224f);
+
+        TextMeshProUGUI title = titleObj.AddComponent<TextMeshProUGUI>();
+        title.text = "目前數據";
+        title.fontSize = 32f;
+        title.color = titleColor;
+        title.alignment = TextAlignmentOptions.Center;
+        title.fontStyle = FontStyles.Bold;
+        ApplyTextStyle(title, 0.2f, 0.14f);
+
+        CreateDivider(statsCard.transform, new Vector2(0f, 185f), new Vector2(260f, 3f));
+
+        GameObject bodyObj = new GameObject("StatsBody");
+        bodyObj.transform.SetParent(statsCard.transform, false);
+        RectTransform bodyRect = bodyObj.AddComponent<RectTransform>();
+        bodyRect.sizeDelta = new Vector2(286f, 430f);
+        bodyRect.anchorMin = new Vector2(0.5f, 0.5f);
+        bodyRect.anchorMax = new Vector2(0.5f, 0.5f);
+        bodyRect.anchoredPosition = new Vector2(0f, -52f);
+
+        statsBodyText = bodyObj.AddComponent<TextMeshProUGUI>();
+        statsBodyText.fontSize = 22f;
+        statsBodyText.color = statsValueColor;
+        statsBodyText.alignment = TextAlignmentOptions.TopLeft;
+        statsBodyText.enableWordWrapping = false;
+        statsBodyText.richText = true;
+        statsBodyText.lineSpacing = 4f;
+
+        CreateDivider(statsCard.transform, new Vector2(0f, -282f), new Vector2(260f, 3f));
     }
 
     void CreateTitle(Transform parent)
@@ -283,11 +362,60 @@ public class PauseMenuUI : MonoBehaviour
         }
     }
 
+    void UpdateStatsPanel()
+    {
+        if (statsBodyText == null) return;
+
+        PlayerStats stats = FindAnyObjectByType<PlayerStats>();
+        if (stats == null)
+        {
+            statsBodyText.text = "找不到玩家數據";
+            return;
+        }
+
+        string labelColor = ColorUtility.ToHtmlStringRGB(statsLabelColor);
+        string valueColor = ColorUtility.ToHtmlStringRGB(statsValueColor);
+
+        statsBodyText.text =
+            StatLine("生命值", FormatNumber(stats.currentHp) + " / " + FormatNumber(stats.maxHp), labelColor, valueColor) +
+            StatLine("攻擊力", FormatNumber(stats.baseDamage), labelColor, valueColor) +
+            StatLine("攻速", stats.attackSpeed.ToString("0.##") + " /s", labelColor, valueColor) +
+            StatLine("攻距", stats.attackRange.ToString("0.#") + " m", labelColor, valueColor) +
+            StatLine("箭矢", stats.arrowCount.ToString(), labelColor, valueColor) +
+            StatLine("爆率", FormatPercent(stats.critRate), labelColor, valueColor) +
+            StatLine("爆傷", "x" + stats.critDamage.ToString("0.##"), labelColor, valueColor) +
+            StatLine("重砲強化", stats.GetArrowStyleCount(PlayerStats.ArrowStyle.Attack).ToString(), labelColor, valueColor) +
+            StatLine("輕弩強化", stats.GetArrowStyleCount(PlayerStats.ArrowStyle.Speed).ToString(), labelColor, valueColor) +
+            StatLine("多重箭強化", stats.GetArrowStyleCount(PlayerStats.ArrowStyle.Multi).ToString(), labelColor, valueColor) +
+            StatLine("吸血", "Lv" + stats.lifestealLevel + "  " + FormatPercent(stats.lifestealLevel * 0.05f), labelColor, valueColor) +
+            StatLine("抗撞", "Lv" + stats.collisionResistLevel + "  " + FormatPercent(stats.collisionResistLevel * 0.1f), labelColor, valueColor) +
+            StatLine("磁鐵", "Lv" + stats.magnetLevel + "  +" + (stats.magnetLevel * 3).ToString() + "m", labelColor, valueColor);
+    }
+
+    string StatLine(string label, string value, string labelColor, string valueColor)
+    {
+        return "<color=#" + labelColor + ">" + label + "</color><pos=54%><color=#" + valueColor + ">" + value + "</color>\n";
+    }
+
+    string FormatPercent(float value)
+    {
+        return (value * 100f).ToString("0.#") + "%";
+    }
+
+    string FormatNumber(float value)
+    {
+        if (value >= 1000000000f) return (value / 1000000000f).ToString("0.##") + "B";
+        if (value >= 1000000f) return (value / 1000000f).ToString("0.##") + "M";
+        if (value >= 1000f) return (value / 1000f).ToString("0.##") + "K";
+        return Mathf.FloorToInt(value).ToString();
+    }
+
     // === 動畫控制 ===
     public void Show(Vector3 fromPosition)
     {
         if (pausePanel == null) return;
 
+        UpdateStatsPanel();
         pausePanel.SetActive(true);
         StopAllCoroutines();
         StartCoroutine(AnimateShow());

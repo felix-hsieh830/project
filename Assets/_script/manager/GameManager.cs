@@ -43,6 +43,7 @@ public class GameManager : MonoBehaviour
     private bool enemyPlusOneWaitingForBoss = false;
     private float enemyPlusOneTrackedBossZ = -1f;
     private const float enemyPlusOneBossPassDistance = 30f;
+    private int smallBossAttackPatternIndex = 0;
 
     [Header("Boss 獎勵箱")]
     public GameObject bossRewardChestPrefab;
@@ -751,9 +752,21 @@ public class GameManager : MonoBehaviour
 
         switch (type)
         {
-            case RewardType.Light: playerStats.attackSpeed += 1.5f; playerStats.baseDamage *= 0.8f; break;
-            case RewardType.Heavy: playerStats.baseDamage += 15f; playerStats.attackSpeed *= 0.8f; break;
-            case RewardType.Multi: playerStats.arrowCount += 2; playerStats.baseDamage *= 0.5f; break;
+            case RewardType.Light:
+                playerStats.attackSpeed += 1.5f;
+                playerStats.baseDamage *= 0.8f;
+                playerStats.RegisterArrowStyle(PlayerStats.ArrowStyle.Speed);
+                break;
+            case RewardType.Heavy:
+                playerStats.baseDamage += 15f;
+                playerStats.attackSpeed *= 0.8f;
+                playerStats.RegisterArrowStyle(PlayerStats.ArrowStyle.Attack);
+                break;
+            case RewardType.Multi:
+                playerStats.arrowCount += 2;
+                playerStats.baseDamage *= 0.5f;
+                playerStats.RegisterArrowStyle(PlayerStats.ArrowStyle.Multi);
+                break;
             case RewardType.BigAtk: playerStats.baseDamage *= 2f; break;
             case RewardType.BigSpd: playerStats.attackSpeed *= 2f; break;
             case RewardType.BigHp: playerStats.AddMaxHealth(playerStats.maxHp); break;
@@ -820,6 +833,7 @@ public class GameManager : MonoBehaviour
                 int randomIndex = Random.Range(0, smallBossPrefabs.Length);
                 spawnedBoss = Instantiate(smallBossPrefabs[randomIndex], spawnPos, Quaternion.identity);
                 if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * 2f);
+                SetupSmallBossAttack(spawnedBoss);
             }
         }
 
@@ -837,5 +851,21 @@ public class GameManager : MonoBehaviour
         // 把 isBigBoss 傳給箱子，讓它知道要跳哪種獎勵
         BossRewardChest chestScript = chest.GetComponent<BossRewardChest>();
         if (chestScript != null) chestScript.isBigBoss = isBigBoss;
+    }
+
+    private void SetupSmallBossAttack(GameObject spawnedBoss)
+    {
+        if (spawnedBoss == null) return;
+
+        SmallBossAttackAI attackAI = spawnedBoss.GetComponent<SmallBossAttackAI>();
+        if (attackAI == null)
+        {
+            attackAI = spawnedBoss.AddComponent<SmallBossAttackAI>();
+        }
+
+        int patternCount = System.Enum.GetValues(typeof(SmallBossAttackAI.AttackPattern)).Length;
+        SmallBossAttackAI.AttackPattern pattern = (SmallBossAttackAI.AttackPattern)(smallBossAttackPatternIndex % patternCount);
+        smallBossAttackPatternIndex++;
+        attackAI.SetPattern(pattern);
     }
 }

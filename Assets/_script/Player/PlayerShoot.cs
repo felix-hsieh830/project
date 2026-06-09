@@ -124,6 +124,7 @@ public class PlayerShoot : MonoBehaviour
             if (arrowScript != null)
             {
                 float finalBaseDamage = stats.baseDamage * totalDamageMultiplier;
+                arrowScript.ApplyVisualColor(stats.GetArrowColor(), stats.arrowWoodColor, stats.GetArrowEmissionColor(), stats.arrowWoodEmissionColor, true);
                 arrowScript.Setup(finalBaseDamage, stats.attackRange, stats.critRate, stats.critDamage, currentPlayerZSpeed, flightSpeedMultiplier, yawRate, stats);
             }
         }
