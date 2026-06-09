@@ -27,7 +27,6 @@ public class PlayerMove : MonoBehaviour
     {
         float touchInput = 0f;
 
-        // 觸控支援
         if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
@@ -37,26 +36,24 @@ public class PlayerMove : MonoBehaviour
                 touchInput = 1f;
         }
 
-        // 鍵盤輸入（AD + 方向鍵）
         float keyInput = Input.GetAxisRaw("Horizontal");
 
-        // 合併輸入，觸控優先
+        // 🌟 觸控優先，有觸控就用觸控，沒有才用鍵盤
         horizontalInput = (Input.touchCount > 0) ? touchInput : keyInput;
+
+        // 🌟 刪掉原本下面這行！
+        // horizontalInput = Input.GetAxisRaw("Horizontal"); 
 
         float distance = transform.position.z;
         if (distance < 0) distance = 0;
 
         float currentForwardSpeed = 0f;
 
-        // 🌟 核心修改：如果「沒有」在打大 Boss，才給予前進速度
         if (!isFightingBigBoss)
         {
             float extraSpeed = (distance / 100f) * speedPerHundredMeters;
             currentForwardSpeed = forwardSpeed + extraSpeed;
         }
-
-        // 左右輸入保持正常運作
-        horizontalInput = Input.GetAxisRaw("Horizontal");
 
         Vector3 movement = new Vector3(horizontalInput * horizontalSpeed, 0, currentForwardSpeed);
         transform.Translate(movement * Time.deltaTime, Space.World);
@@ -67,7 +64,6 @@ public class PlayerMove : MonoBehaviour
 
         if (animController != null)
         {
-            // 🌟 如果正在打大王，傳入 0 讓下半身停止跑步動畫；反之則傳 1 繼續跑
             float verticalInput = isFightingBigBoss ? 0f : 1.0f;
             animController.UpdateMovementAnimation(horizontalInput, verticalInput);
         }

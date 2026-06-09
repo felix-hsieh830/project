@@ -11,15 +11,21 @@ public class ArrowFly : MonoBehaviour
     private float yawDegreesPerSecond = 0f;
     private bool isSetup = false;
     private bool hasHit = false;
-    private PlayerStats playerStats; // 🌟 抓取玩家狀態
+    private PlayerStats playerStats;
 
-    public void Setup(float playerDamage, float playerRange, float critRate, float critDamage,
-                  float inheritedSpeed, float flightSpeedMultiplier, float yawRate = 0f,
-                  PlayerStats stats = null)
+    public void Setup(
+        float playerDamage,
+        float playerRange,
+        float critRate,
+        float critDamage,
+        float inheritedSpeed,
+        float flightSpeedMultiplier,
+        float yawRate = 0f,
+        PlayerStats stats = null
+    )
     {
         isSetup = true;
         playerStats = stats;
-        //playerStats = ownerStats != null ? ownerStats : FindAnyObjectByType<PlayerStats>(); // 🌟 啟動時取得玩家天賦
 
         if (Random.value <= critRate)
         {
@@ -32,26 +38,43 @@ public class ArrowFly : MonoBehaviour
         }
 
         totalSpeed = (speed * flightSpeedMultiplier) + inheritedSpeed;
+
+        if (totalSpeed <= 0f)
+        {
+            totalSpeed = speed;
+        }
+
         lifeTime = Mathf.Min(playerRange, 90f) / totalSpeed;
         Destroy(gameObject, lifeTime);
+
         yawDegreesPerSecond = yawRate;
     }
 
     void Start()
     {
-        if (!isSetup) { totalSpeed = speed; Destroy(gameObject, lifeTime); }
+        if (!isSetup)
+        {
+            totalSpeed = speed;
+            Destroy(gameObject, lifeTime);
+        }
     }
 
     void Update()
     {
-        if (yawDegreesPerSecond != 0f) transform.Rotate(0f, yawDegreesPerSecond * Time.deltaTime, 0f);
+        if (yawDegreesPerSecond != 0f)
+        {
+            transform.Rotate(0f, yawDegreesPerSecond * Time.deltaTime, 0f);
+        }
 
         float stepDistance = totalSpeed * Time.deltaTime;
+
         RaycastHit hit;
+
         if (Physics.Raycast(transform.position, transform.forward, out hit, stepDistance))
         {
             HandleCollision(hit.collider);
         }
+
         transform.Translate(0, 0, stepDistance);
     }
 
@@ -60,31 +83,77 @@ public class ArrowFly : MonoBehaviour
         HandleCollision(other);
     }
 
-    // 🌟 將碰撞邏輯整合，方便套用天賦
     private void HandleCollision(Collider hitCollider)
     {
-        if (hasHit) return;
-
-        Enemy target = hitCollider.GetComponent<Enemy>();
-        BossHealth boss = hitCollider.GetComponent<BossHealth>();
-
-        if (target != null || boss != null)
+        if (hasHit)
         {
-            hasHit = true;
-
-            if (target != null) target.TakeDamage(finalDamage);
-            else if (boss != null) boss.TakeDamage(finalDamage);
-
-            if (playerStats == null) playerStats = FindAnyObjectByType<PlayerStats>();
-
-            // 直接觸發，不依賴 dealtDamage
-            if (playerStats != null && playerStats.lifestealLevel > 0)
-            {
-                float healAmount = Mathf.Max(1f, finalDamage) * (playerStats.lifestealLevel * 0.05f);
-                playerStats.Heal(Mathf.Max(1, Mathf.FloorToInt(healAmount)));
-            }
-
-            Destroy(gameObject);
+            return;
         }
+
+        // 重點：改成抓父物件，避免 Collider 在子物件時抓不到 Enemy
+        Enemy target = hitCollider.GetComponentInParent<Enemy>();
+        BossHealth boss = hitCollider.GetComponentInParent<BossHealth>();
+
+        if (target == null && boss == null)
+        {
+            return;
+        }
+
+        hasHit = true;
+
+        bool dealtDamage = false;
+        float lifestealDamage = 0f;
+
+        if (target != null)
+        {
+            lifestealDamage = Mathf.Min(finalDamage, Mathf.Max(0f, target.CurrentHp));
+            dealtDamage = target.TakeDamage(finalDamage);
+        }
+        else if (boss != null)
+        {
+            lifestealDamage = Mathf.Min(finalDamage, Mathf.Max(0f, boss.currentHp));
+            dealtDamage = boss.TakeDamage(finalDamage);
+        }
+
+        if (!dealtDamage)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        if (playerStats == null)
+        {
+            playerStats = FindAnyObjectByType<PlayerStats>();
+        }
+
+        if (playerStats == null)
+        {
+            Debug.LogWarning("吸血失敗：找不到 PlayerStats");
+            Destroy(gameObject);
+            return;
+        }
+
+        if (playerStats.lifestealLevel <= 0)
+        {
+            Debug.Log("沒有觸發吸血：lifestealLevel 目前是 0");
+            Destroy(gameObject);
+            return;
+        }
+
+        float lifestealRate = playerStats.lifestealLevel * 0.1f;
+        if (lifestealDamage <= 0f)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        float healAmountFloat = lifestealDamage * lifestealRate;
+        int healAmount = Mathf.Max(1, Mathf.FloorToInt(healAmountFloat));
+
+        //Debug.Log("觸發吸血，等級：" + playerStats.lifestealLevel + "，回血量：" + healAmount);
+
+        playerStats.Heal(healAmount, true);
+
+        Destroy(gameObject);
     }
 }

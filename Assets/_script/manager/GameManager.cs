@@ -32,6 +32,9 @@ public class GameManager : MonoBehaviour
     private PlayerStats playerStats;
     private bool isSpawning = false;
 
+    [Header("Boss 獎勵箱")]
+    public GameObject bossRewardChestPrefab;
+
     // 🌟 這裡改成 EnemyPlusOne
     public enum RewardType { Light, Heavy, Multi, BigAtk, BigSpd, Lifesteal, Resist, EnemyPlusOne, Magnet }
     private List<RewardType> currentOptions = new List<RewardType>();
@@ -237,5 +240,15 @@ public class GameManager : MonoBehaviour
                 if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * 2f);
             }
         }
+    }
+    public void SpawnBossRewardChest(Vector3 position, bool isBigBoss)
+    {
+        if (bossRewardChestPrefab == null) return;
+        Vector3 spawnPos = new Vector3(position.x - 1f, -0.45f, position.z);
+        GameObject chest = Instantiate(bossRewardChestPrefab, spawnPos, Quaternion.Euler(0, 180f, 0));
+
+        // 把 isBigBoss 傳給箱子，讓它知道要跳哪種獎勵
+        BossRewardChest chestScript = chest.GetComponent<BossRewardChest>();
+        if (chestScript != null) chestScript.isBigBoss = isBigBoss;
     }
 }

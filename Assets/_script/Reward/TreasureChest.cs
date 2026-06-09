@@ -3,11 +3,11 @@ using TMPro;
 
 public class TreasureChest : MonoBehaviour
 {
-    [Header("寶箱數值設定")]
-    public int hpBonus = 20;
-    public float damageBonus = 5f;
-    public float attackSpeedBonus = 0.2f;
-    public float attackRangeBonus = 5f;
+    [Header("寶箱基礎數值")]
+    public int hpBonus = 30;                // 🌟 20 → 30
+    public float damageBonus = 8f;          // 🌟 5 → 8
+    public float attackSpeedBonus = 0.3f;   // 🌟 0.2 → 0.3
+    public float attackRangeBonus = 1.5f; // 🌟 6 → 1.5
     public float critRateBonus = 0.05f;
     public float moveSpeedBonus = 0.5f;
 
@@ -15,7 +15,7 @@ public class TreasureChest : MonoBehaviour
     public TextMeshPro rewardText;
 
     private int selectedReward;
-    private PlayerStats player; // 🌟 為了磁鐵功能抓取玩家
+    private PlayerStats player;
     private PlayerMove playerMove;
 
     void Start()
@@ -23,6 +23,18 @@ public class TreasureChest : MonoBehaviour
         selectedReward = Random.Range(0, 6);
         player = FindAnyObjectByType<PlayerStats>();
         if (player != null) playerMove = player.GetComponent<PlayerMove>();
+
+        // 🌟 距離成長：每 40m 一階段，每階段 +12%
+        float scalingDistance = Mathf.Max(0, transform.position.z - 30f);
+        float stage = Mathf.Floor(scalingDistance / 40f);
+        float distanceMultiplier = 1f + stage * 0.12f;
+
+        hpBonus = Mathf.RoundToInt(hpBonus * distanceMultiplier);
+        damageBonus = (float)System.Math.Round(damageBonus * distanceMultiplier, 1);
+        attackSpeedBonus = (float)System.Math.Round(attackSpeedBonus * distanceMultiplier, 2);
+        attackRangeBonus = (float)System.Math.Round(attackRangeBonus * distanceMultiplier, 1);
+        critRateBonus = (float)System.Math.Round(critRateBonus * distanceMultiplier, 2);
+        moveSpeedBonus = (float)System.Math.Round(moveSpeedBonus * distanceMultiplier, 2);
 
         if (rewardText != null)
         {
@@ -40,17 +52,15 @@ public class TreasureChest : MonoBehaviour
 
     void Update()
     {
-        // 🌟 實裝金幣磁鐵功能
         if (player != null && player.magnetLevel > 0)
         {
-            float magnetRadius = player.magnetLevel * 5f;
+            float magnetRadius = player.magnetLevel * 3f;
             float distance = Vector3.Distance(transform.position, player.transform.position);
 
-            // 如果在吸附範圍內，就用 MoveTowards 魔法飛向主角！
             if (distance <= magnetRadius)
             {
                 float playerForwardSpeed = playerMove != null ? playerMove.forwardSpeed : 0f;
-                float magnetSpeed = 15f + playerForwardSpeed + (distance * 6f);
+                float magnetSpeed = 15f + playerForwardSpeed + (distance * 2f);
                 transform.position = Vector3.MoveTowards(transform.position, player.transform.position, magnetSpeed * Time.deltaTime);
             }
         }
@@ -64,7 +74,7 @@ public class TreasureChest : MonoBehaviour
         if (stats != null)
         {
             string floatingMsg = rewardText.text.Replace("\n", " ");
-            FloatingTextSpawner.instance?.Spawn(floatingMsg, transform.position, Color.green);
+            FloatingTextSpawner.instance?.Spawn(floatingMsg, transform.position, Color.green, Vector3.up, other.transform);
 
             switch (selectedReward)
             {

@@ -4,13 +4,13 @@ using TMPro;
 public class PlayerStats : MonoBehaviour
 {
     [Header("生存屬性")]
-    public int maxHp = 100;
-    public int currentHp = 100;
+    public int maxHp = 200;         // 🌟 100 → 200
+    public int currentHp = 200;
 
     [Header("攻擊屬性")]
-    public float baseDamage = 10f;
+    public float baseDamage = 15f;  // 🌟 10 → 15
     public float attackSpeed = 1f;
-    public float attackRange = 20f;
+    public float attackRange = 10f; // 🌟 20 → 10，讓成長有感
     public int arrowCount = 1;
 
     [Header("爆擊屬性")]
@@ -20,7 +20,7 @@ public class PlayerStats : MonoBehaviour
     [Header("🌟 特殊天賦等級 (Boss獎勵)")]
     public int lifestealLevel = 0;
     public int collisionResistLevel = 0;
-    public int extraEnemies = 0;         // 🌟 改成這個：額外增加的怪物數量 (預設 0)
+    public int extraEnemies = 0;
     public int magnetLevel = 0;
 
     [Header("UI 顯示")]
@@ -53,18 +53,18 @@ public class PlayerStats : MonoBehaviour
         if (killText != null) killText.text = "擊殺: " + FormatNumber(killCount);
     }
 
-    public void Heal(int amount)
+    public void Heal(int amount, bool showFloatingTextWhenFull = false)
     {
         if (currentHp <= 0) return;
 
         int hpBeforeHeal = currentHp;
-        currentHp = Mathf.Clamp(currentHp + amount, 0, maxHp);
+        currentHp = currentHp + amount; // 🌟 允許超過最大生命（吸血用）
         int actualHeal = currentHp - hpBeforeHeal;
 
         UpdateHPUI();
-        if (actualHeal > 0)
+        if (actualHeal > 0 || showFloatingTextWhenFull)
         {
-            FloatingTextSpawner.instance?.Spawn("+" + actualHeal.ToString(), transform.position + Vector3.up * 2f, Color.green);
+            FloatingTextSpawner.instance?.Spawn("+" + actualHeal.ToString(), transform.position + Vector3.up * 2f, Color.green, Vector3.right, transform);
         }
     }
 
@@ -73,7 +73,7 @@ public class PlayerStats : MonoBehaviour
         float damageReduction = 1f - (collisionResistLevel * 0.1f);
         int finalDamage = Mathf.RoundToInt(damage * damageReduction);
 
-        FloatingTextSpawner.instance?.Spawn("-" + finalDamage.ToString(), transform.position + Vector3.up * 2f, Color.red);
+        FloatingTextSpawner.instance?.Spawn("-" + finalDamage.ToString(), transform.position + Vector3.up * 2f, Color.red, Vector3.right, transform);
         currentHp -= finalDamage;
         UpdateHPUI();
 
@@ -100,8 +100,8 @@ public class PlayerStats : MonoBehaviour
     {
         if (hpText == null) return;
         if (currentHp < 0) currentHp = 0;
-        hpText.SetText(FormatNumber(currentHp));
-        hpText.ForceMeshUpdate();
+        hpText.text = FormatNumber(currentHp);
+        hpText.ForceMeshUpdate(true, true);
         Canvas.ForceUpdateCanvases();
     }
 

@@ -6,17 +6,17 @@ public class FloatingText : MonoBehaviour
     public float floatSpeed = 2f;
     public float fadeTime = 1f;
 
-    // 將 TextMeshPro 更改為通用的 TMP_Text
+    // 🌟 飄移方向，預設往上；往右飄就傳 Vector3.right
+    public Vector3 floatDirection = Vector3.up;
+
     private TMP_Text tmp;
     private float timer;
     private Color startColor;
 
     void Start()
     {
-        // 改用 GetComponentInChildren，確保即便文字在子物件也能抓到
         tmp = GetComponentInChildren<TMP_Text>();
 
-        // 加入防呆機制，確認有抓到組件才執行後續設定
         if (tmp != null)
         {
             startColor = tmp.color;
@@ -31,10 +31,10 @@ public class FloatingText : MonoBehaviour
 
     void Update()
     {
-        // 往上飄
-        transform.position += Vector3.up * floatSpeed * Time.deltaTime;
+        // 🌟 依照指定方向飄移
+        transform.position += floatDirection * floatSpeed * Time.deltaTime;
 
-        // 漸漸消失 (確保 tmp 存在才修改顏色)
+        // 漸漸消失
         if (tmp != null)
         {
             timer += Time.deltaTime;

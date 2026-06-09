@@ -47,6 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FloatingText
   floatSpeed: 1.5
   fadeTime: 1
+  floatDirection: {x: 0, y: 1, z: 0}
 --- !u!1 &2559183163821976544
 GameObject:
   m_ObjectHideFlags: 0
@@ -109,7 +110,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -3557643832190381081, guid: 13a928645a717fb4188b8261b38c9108, type: 2}
+  - {fileID: 8836712136923502643, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -155,8 +156,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Sample text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 13a928645a717fb4188b8261b38c9108, type: 2}
-  m_sharedMaterial: {fileID: -3557643832190381081, guid: 13a928645a717fb4188b8261b38c9108, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
+  m_sharedMaterial: {fileID: 8836712136923502643, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -197,7 +198,7 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_TextWrappingMode: 0
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}

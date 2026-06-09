@@ -1,11 +1,13 @@
 using UnityEngine;
 using TMPro;
+using System.Collections.Generic;
 
 public class Enemy : MonoBehaviour
 {
     [Header("怪物屬性")]
     public float maxHp = 30f;
     private float currentHp;
+    public float CurrentHp => currentHp;
 
     [Header("UI 顯示")]
     public TextMeshPro hpText;
@@ -18,6 +20,12 @@ public class Enemy : MonoBehaviour
     private int spawnedExtraEnemies = 0;
     private bool hasInitializedHealth = false;
     private bool skipInitialHpScaling = false;
+
+    // 🌟 靜態列表取代 FindObjectsByType，提升效能
+    private static List<Enemy> allEnemies = new List<Enemy>();
+
+    void OnEnable() { allEnemies.Add(this); }
+    void OnDisable() { allEnemies.Remove(this); }
 
     void Start()
     {
@@ -41,8 +49,8 @@ public class Enemy : MonoBehaviour
         if (!skipInitialHpScaling)
         {
             float scalingDistance = Mathf.Max(0, transform.position.z - 30f);
-            float stage = Mathf.Floor(scalingDistance / 40f);
-            maxHp = Mathf.Round(maxHp * Mathf.Pow(1.1f, stage));
+            float stage = Mathf.Floor(scalingDistance / 80f); // 🌟 40 → 80，成長放慢
+            maxHp = Mathf.Round(maxHp + stage * maxHp * 0.15f); // 🌟 改用加法，每階段+15%基礎HP
         }
 
         currentHp = maxHp;
@@ -61,8 +69,7 @@ public class Enemy : MonoBehaviour
 
     public static void RefreshAllExtraEnemies(int desiredCount)
     {
-        Enemy[] enemies = FindObjectsByType<Enemy>();
-        foreach (Enemy enemy in enemies)
+        foreach (Enemy enemy in allEnemies)
         {
             enemy.EnsureExtraEnemyCount(desiredCount);
         }
@@ -70,17 +77,10 @@ public class Enemy : MonoBehaviour
 
     public static void ClearAllExtraEnemies()
     {
-        Enemy[] enemies = FindObjectsByType<Enemy>();
-        foreach (Enemy enemy in enemies)
+        foreach (Enemy enemy in allEnemies)
         {
-            if (enemy.isClone)
-            {
-                Destroy(enemy.gameObject);
-            }
-            else
-            {
-                enemy.spawnedExtraEnemies = 0;
-            }
+            if (enemy.isClone) Destroy(enemy.gameObject);
+            else enemy.spawnedExtraEnemies = 0;
         }
     }
 

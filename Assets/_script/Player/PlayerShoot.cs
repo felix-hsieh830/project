@@ -96,8 +96,8 @@ public class PlayerShoot : MonoBehaviour
         float estimatedTotalSpeed = arrowBaseSpeed * flightSpeedMultiplier + currentPlayerZSpeed;
         float flightTime = actualRange / Mathf.Max(estimatedTotalSpeed, 0.1f);
 
-        float anglePerStep = 1f;   // 每根箭的生成角度間隔
-        float yawPerStep = 2.5f;   // 越外側的箭飛行中額外擴散角速度
+        float anglePerStep = 1.5f;   // 每根箭的生成角度間隔
+        float yawPerStep = 4f;   // 越外側的箭飛行中額外擴散角速度
 
         for (int i = 0; i < actualArrowCount; i++)
         {
@@ -109,7 +109,7 @@ public class PlayerShoot : MonoBehaviour
             float yawRate = (distFromCenter / Mathf.Max(center, 1f)) * yawPerStep / Mathf.Max(flightTime, 0.1f);
 
             Quaternion arrowRotation = transform.rotation * Quaternion.Euler(0, spawnAngle, 0);
-            Vector3 spawnPosition = transform.position + new Vector3(0, 0, 1.5f);
+            Vector3 spawnPosition = transform.position + new Vector3(0, 1.2f, 1.5f);
             GameObject arrow = Instantiate(arrowPrefab, spawnPosition, arrowRotation);
 
             ArrowFly arrowScript = arrow.GetComponent<ArrowFly>();

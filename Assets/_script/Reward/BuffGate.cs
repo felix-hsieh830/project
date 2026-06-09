@@ -18,38 +18,18 @@ public class BuffGate : MonoBehaviour
         RollBuffType();
         RollBuffValue();
         UpdateUI();
-
-        // 🌟 抽完籤、寫好字之後，立刻幫大門塗上對應的顏色！
         UpdateGateColor();
     }
 
-    // 🌟 新增這個變色魔法區塊
     void UpdateGateColor()
     {
-        // 抓取門身上的 MeshRenderer (負責顯示外觀的元件)
         MeshRenderer renderer = GetComponent<MeshRenderer>();
-        if (renderer == null) return; // 防呆機制
+        if (renderer == null) return;
 
-        // 設定半透明度 (0.0 到 1.0，0.5 代表 50% 半透明)
-        // 這樣才不會把你剛剛辛苦設定的玻璃質感蓋掉！
         float alpha = 0.5f;
-
-        // 根據稀有度換顏色 (Unity 裡的顏色數值是 0f ~ 1f)
-        if (rarity == "普通")
-        {
-            // 白色半透明
-            renderer.material.color = new Color(1f, 1f, 1f, alpha);
-        }
-        else if (rarity == "稀有")
-        {
-            // 藍色半透明
-            renderer.material.color = new Color(0.2f, 0.5f, 1f, alpha);
-        }
-        else if (rarity == "傳說")
-        {
-            // 紫色半透明 (紅 + 藍 = 紫)
-            renderer.material.color = new Color(0.7f, 0.2f, 0.9f, alpha);
-        }
+        if (rarity == "普通") renderer.material.color = new Color(1f, 1f, 1f, alpha);
+        else if (rarity == "稀有") renderer.material.color = new Color(0.2f, 0.5f, 1f, alpha);
+        else if (rarity == "傳說") renderer.material.color = new Color(0.7f, 0.2f, 0.9f, alpha);
     }
 
     void UpdateUI()
@@ -84,48 +64,35 @@ public class BuffGate : MonoBehaviour
         float baseVal = 0;
         switch (myBuffType)
         {
-            case BuffType.AttackSpeed: baseVal = 0.2f; break;
-            case BuffType.AttackRange: baseVal = 3f; break;
+            case BuffType.AttackSpeed: baseVal = 0.3f; break;  // 🌟 0.2 → 0.3
+            case BuffType.AttackRange: baseVal = 1.5f; break; // 🌟 4 → 1.5
             case BuffType.CritRate: baseVal = 0.05f; break;
-            case BuffType.Damage: baseVal = 2f; break;
-            case BuffType.MaxHP: baseVal = 20f; break;
+            case BuffType.Damage: baseVal = 4f; break;         // 🌟 2 → 4
+            case BuffType.MaxHP: baseVal = 30f; break;         // 🌟 20 → 30
         }
 
-        // 抽稀有度倍率 (你的 60 / 30 / 10 設定)
         int rarityRoll = Random.Range(0, 100);
         float rarityMultiplier = 1f;
 
         if (rarityRoll < 60) { rarityMultiplier = 1f; rarity = "普通"; }
-        else if (rarityRoll < 90) { rarityMultiplier = 2f; rarity = "稀有"; }
-        else { rarityMultiplier = 4f; rarity = "傳說"; }
+        else if (rarityRoll < 90) { rarityMultiplier = 1.5f; rarity = "稀有"; }
+        else { rarityMultiplier = 2f; rarity = "傳說"; }
+
         float scalingDistance = transform.position.z - 30f;
         if (scalingDistance < 0) scalingDistance = 0;
 
-        // 假設門的階段比較長，每 100 公尺才算 1 個階段
-        float stage = Mathf.Floor(scalingDistance / 100f);
+        // 🌟 每 40m 一階段（從 100m），成長更有感
+        float stage = Mathf.Floor(scalingDistance / 40f);
+        float distanceMultiplier = 1f + stage * 0.12f; // 🌟 改用加法，每階段+12%
 
-        // 🌟 大門的指數成長 (因為門給的是玩家能力，倍率設小一點，例如 1.1 的 stage 次方)
-        float distanceMultiplier = Mathf.Pow(1.1f, stage);
-
-        // 算出最終數值
         buffValue = baseVal * rarityMultiplier * distanceMultiplier;
-        if (myBuffType == BuffType.CritRate || myBuffType == BuffType.AttackSpeed)
-        {
-            buffValue = (float)System.Math.Round(buffValue, 2);
-        }
-        else
-        {
-  
-            buffValue = Mathf.Round(buffValue);
-        }
+
         if (myBuffType == BuffType.MaxHP)
-        {
             buffValue = Mathf.Round(buffValue);
-        }
+        else if (myBuffType == BuffType.CritRate || myBuffType == BuffType.AttackSpeed)
+            buffValue = (float)System.Math.Round(buffValue, 2);
         else
-        {
             buffValue = (float)System.Math.Round(buffValue, 1);
-        }
     }
 
     private bool hasTriggered = false;
@@ -136,14 +103,11 @@ public class BuffGate : MonoBehaviour
         PlayerStats stats = other.GetComponent<PlayerStats>();
         if (stats != null)
         {
-            // 🌟 碰到的瞬間立刻上鎖
             hasTriggered = true;
 
-            // 🌟 修正飄字：直接抓大門上的字，並把換行(\n)換成空格
             string floatingMsg = buffText.text.Replace("\n", " ");
-            FloatingTextSpawner.instance?.Spawn(floatingMsg, transform.position, Color.green);
+            FloatingTextSpawner.instance?.Spawn(floatingMsg, transform.position, Color.green, Vector3.up, other.transform);
 
-            // 1. 玩家獲得能力加成
             switch (myBuffType)
             {
                 case BuffType.AttackSpeed: stats.attackSpeed += buffValue; break;

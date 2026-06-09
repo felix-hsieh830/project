@@ -245,7 +245,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &36039030
@@ -916,7 +916,7 @@ MonoBehaviour:
   currentHp: 100
   baseDamage: 10
   attackSpeed: 1
-  attackRange: 5
+  attackRange: 15
   arrowCount: 1
   critRate: 0.1
   critDamage: 2
@@ -1656,7 +1656,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FloatingTextSpawner
   floatingTextPrefab: {fileID: 1486110174550743594, guid: 3b3a980b13879d9408f777c2e4eaff5a, type: 3}
   heightOffset: 2
-  randomOffset: 0.5
+  randomOffset: 0
 --- !u!4 &331821150
 Transform:
   m_ObjectHideFlags: 0
@@ -1665,8 +1665,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 331821148}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.87378, y: 0, z: 17.63323}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.59, y: 0.875, z: 17.63323}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2105,7 +2105,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &393013901
@@ -3533,7 +3533,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &998151938
@@ -4790,7 +4790,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &1489654125
@@ -5156,7 +5156,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &1718348109
@@ -5708,6 +5708,7 @@ MonoBehaviour:
   - {fileID: 8650953477767932515, guid: 88025c01ec3626a4c9b4ba391ceeb1fb, type: 3}
   bigBossPrefab: {fileID: 8650953477767932515, guid: c354acfb3264b274293bf97997792045, type: 3}
   bossSpawnDistance: 145
+  bossRewardChestPrefab: {fileID: 8872295833530894158, guid: a282ef3c1a61b3f4c8e20946bc3cdc61, type: 3}
 --- !u!1 &1919771918
 GameObject:
   m_ObjectHideFlags: 0
@@ -6472,5 +6473,5 @@ SceneRoots:
   - {fileID: 1216320047}
   - {fileID: 1888032524}
   - {fileID: 961739753}
-  - {fileID: 331821150}
   - {fileID: 1194729478}
+  - {fileID: 331821150}

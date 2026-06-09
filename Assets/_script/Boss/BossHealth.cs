@@ -135,16 +135,14 @@ public class BossHealth : MonoBehaviour
         if (isBigBoss)
         {
             PlayerMove playerMove = FindAnyObjectByType<PlayerMove>();
-            if (playerMove != null)
-            {
-                playerMove.isFightingBigBoss = false;
-            }
-            // 🌟 擊殺 Boss，鏡頭緩緩升回高空
+            if (playerMove != null) playerMove.isFightingBigBoss = false;
             if (Camera.main != null) Camera.main.GetComponent<CameraFollow>()?.SwitchToNormalCamera();
         }
 
+        // 🌟 改成在 Boss 位置生成獎勵箱，不直接跳獎勵介面
         GameManager gm = FindAnyObjectByType<GameManager>();
-        if (gm != null) gm.ShowReward(isBigBoss);
+        if (gm != null) gm.SpawnBossRewardChest(transform.position, isBigBoss);
+
         Destroy(gameObject);
     }
     public string FormatNumber(float number)

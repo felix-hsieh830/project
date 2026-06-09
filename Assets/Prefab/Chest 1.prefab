@@ -27,7 +27,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3138647103972566967}
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 0, y: 0, z: 0.069}
+  m_LocalPosition: {x: 0, y: 0, z: 0.05}
   m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -35,7 +35,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.37, y: 0.9}
+  m_AnchoredPosition: {x: -0.37, y: 0.935}
   m_SizeDelta: {x: 20, y: 5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &5003827912354289599
@@ -107,7 +107,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Sample text
+  m_text: "\u9078\u64C7\u734E\u52F5"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
   m_sharedMaterial: {fileID: 8836712136923502643, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
@@ -297,9 +297,9 @@ GameObject:
   - component: {fileID: 4967563358351372553}
   - component: {fileID: 5407727140884187632}
   - component: {fileID: 4134846439241447891}
-  - component: {fileID: 3490049557833742270}
+  - component: {fileID: 2549037101933291817}
   m_Layer: 0
-  m_Name: Chest
+  m_Name: Chest 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -315,7 +315,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.27566, y: -0, z: 3.94843}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2821338824293359147}
@@ -423,7 +423,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.74320006, y: 0.5, z: 0.7}
   m_Center: {x: -0.37160003, y: 0.12370196, z: 0.21928793}
---- !u!114 &3490049557833742270
+--- !u!114 &2549037101933291817
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -432,16 +432,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 8872295833530894158}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca0edd45efbbbe9489a4acd95436344a, type: 3}
+  m_Script: {fileID: 11500000, guid: 33958fa422429344c88054ff43d966cf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TreasureChest
-  hpBonus: 20
-  damageBonus: 5
-  attackSpeedBonus: 0.2
-  attackRangeBonus: 5
-  critRateBonus: 0.05
-  moveSpeedBonus: 0.2
-  rewardText: {fileID: 5962210008995258428}
+  m_EditorClassIdentifier: Assembly-CSharp::BossRewardChest
+  isBigBoss: 0
 --- !u!1 &9184781466608305495
 GameObject:
   m_ObjectHideFlags: 0
