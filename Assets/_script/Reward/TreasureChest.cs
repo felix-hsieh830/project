@@ -74,7 +74,7 @@ public class TreasureChest : MonoBehaviour
         if (stats != null)
         {
             string floatingMsg = rewardText.text.Replace("\n", " ");
-            FloatingTextSpawner.instance?.Spawn(floatingMsg, transform.position, Color.green, Vector3.up, other.transform);
+            FloatingTextSpawner.instance?.Spawn(floatingMsg, other.transform.position, Color.green, Vector3.up, other.transform, 0.65f, 2.35f);
 
             switch (selectedReward)
             {

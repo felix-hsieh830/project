@@ -11,6 +11,10 @@ public class FloatingTextSpawner : MonoBehaviour
     public float heightOffset = 1.0f;
     [Tooltip("左右前後隨機散開的範圍，避免數字全疊在一起")]
     public float randomOffset = 0.5f;
+    public float defaultFloatSpeed = 2f;
+    public float rewardFloatSpeed = 1f;
+    public float rewardHeightOffset = 6f;
+    public float rightSideOffset = 1.35f;
 
     void Awake()
     {
@@ -21,25 +25,33 @@ public class FloatingTextSpawner : MonoBehaviour
     // 🌟 parent: 跟著誰走 (傳入角色 transform 就會跟著角色，不填則留在原地)
     public void Spawn(string text, Vector3 position, Color color, Vector3 direction = default, Transform parent = null)
     {
+        Spawn(text, position, color, direction, parent, defaultFloatSpeed);
+    }
+
+    public void Spawn(string text, Vector3 position, Color color, Vector3 direction, Transform parent, float floatSpeed)
+    {
+        Spawn(text, position, color, direction, parent, floatSpeed, heightOffset);
+    }
+
+    public void Spawn(string text, Vector3 position, Color color, Vector3 direction, Transform parent, float floatSpeed, float spawnHeightOffset)
+    {
         if (direction == default)
             direction = Vector3.up;
 
-        Vector3 randomPos = new Vector3(
-            Random.Range(-randomOffset, randomOffset),
-            heightOffset,
-            Random.Range(-randomOffset, randomOffset)
-        );
-        Vector3 spawnPosition = position + randomPos;
+        Vector3 offset;
+        Vector3 floatDirection = direction;
+
         if (direction == Vector3.right)
         {
-            randomPos = new Vector3(1.5f, heightOffset, 0f);
+            offset = new Vector3(rightSideOffset, spawnHeightOffset, 0f);
+            floatDirection = Vector3.up;
         }
         else
         {
-            // 🌟 固定位置，不隨機
-            randomPos = new Vector3(0f, heightOffset, 0f);
+            offset = new Vector3(0f, spawnHeightOffset, 0f);
         }
 
+        Vector3 spawnPosition = position + offset;
         GameObject obj = Instantiate(floatingTextPrefab, spawnPosition, Quaternion.identity);
 
         // 🌟 綁在父物件上，飄字就會跟著移動
@@ -56,8 +68,8 @@ public class FloatingTextSpawner : MonoBehaviour
         FloatingText ft = obj.GetComponent<FloatingText>();
         if (ft != null)
         {
-            ft.floatDirection = direction;
-            Debug.Log("方向設定：" + direction); // 看 Console 印出啥
+            ft.floatDirection = floatDirection;
+            ft.floatSpeed = floatSpeed;
         }
         else
         {

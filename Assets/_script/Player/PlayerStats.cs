@@ -64,7 +64,7 @@ public class PlayerStats : MonoBehaviour
         UpdateHPUI();
         if (actualHeal > 0 || showFloatingTextWhenFull)
         {
-            FloatingTextSpawner.instance?.Spawn("+" + actualHeal.ToString(), transform.position + Vector3.up * 2f, Color.green, Vector3.right, transform);
+            FloatingTextSpawner.instance?.Spawn("+" + actualHeal.ToString(), transform.position, Color.green, Vector3.right, transform, 1.15f);
         }
     }
 
@@ -73,7 +73,7 @@ public class PlayerStats : MonoBehaviour
         float damageReduction = 1f - (collisionResistLevel * 0.1f);
         int finalDamage = Mathf.RoundToInt(damage * damageReduction);
 
-        FloatingTextSpawner.instance?.Spawn("-" + finalDamage.ToString(), transform.position + Vector3.up * 2f, Color.red, Vector3.right, transform);
+        FloatingTextSpawner.instance?.Spawn("-" + finalDamage.ToString(), transform.position, Color.red, Vector3.right, transform, 1.25f);
         currentHp -= finalDamage;
         UpdateHPUI();
 

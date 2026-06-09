@@ -5,6 +5,7 @@ public class ArrowFly : MonoBehaviour
     [Header("箭矢飛行速度")]
     public float speed = 15f;
     public float lifeTime = 3f;
+    public float minLifeTime = 0.12f;
 
     private float totalSpeed;
     private float finalDamage;
@@ -44,7 +45,7 @@ public class ArrowFly : MonoBehaviour
             totalSpeed = speed;
         }
 
-        lifeTime = Mathf.Min(playerRange, 90f) / totalSpeed;
+        lifeTime = Mathf.Max(minLifeTime, Mathf.Min(playerRange, 90f) / totalSpeed);
         Destroy(gameObject, lifeTime);
 
         yawDegreesPerSecond = yawRate;
@@ -101,6 +102,12 @@ public class ArrowFly : MonoBehaviour
 
         hasHit = true;
 
+        if (!IsVisibleToMainCamera(hitCollider.bounds))
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         bool dealtDamage = false;
         float lifestealDamage = 0f;
 
@@ -140,7 +147,7 @@ public class ArrowFly : MonoBehaviour
             return;
         }
 
-        float lifestealRate = playerStats.lifestealLevel * 0.1f;
+        float lifestealRate = playerStats.lifestealLevel * 0.05f;
         if (lifestealDamage <= 0f)
         {
             Destroy(gameObject);
@@ -155,5 +162,37 @@ public class ArrowFly : MonoBehaviour
         playerStats.Heal(healAmount, true);
 
         Destroy(gameObject);
+    }
+
+    private bool IsVisibleToMainCamera(Bounds bounds)
+    {
+        Camera mainCamera = Camera.main;
+        if (mainCamera == null)
+        {
+            return true;
+        }
+
+        Vector3 center = bounds.center;
+        Vector3 extents = bounds.extents;
+
+        return IsPointInCameraView(mainCamera, center)
+            || IsPointInCameraView(mainCamera, center + new Vector3(extents.x, extents.y, extents.z))
+            || IsPointInCameraView(mainCamera, center + new Vector3(extents.x, extents.y, -extents.z))
+            || IsPointInCameraView(mainCamera, center + new Vector3(extents.x, -extents.y, extents.z))
+            || IsPointInCameraView(mainCamera, center + new Vector3(extents.x, -extents.y, -extents.z))
+            || IsPointInCameraView(mainCamera, center + new Vector3(-extents.x, extents.y, extents.z))
+            || IsPointInCameraView(mainCamera, center + new Vector3(-extents.x, extents.y, -extents.z))
+            || IsPointInCameraView(mainCamera, center + new Vector3(-extents.x, -extents.y, extents.z))
+            || IsPointInCameraView(mainCamera, center + new Vector3(-extents.x, -extents.y, -extents.z));
+    }
+
+    private bool IsPointInCameraView(Camera camera, Vector3 worldPoint)
+    {
+        Vector3 viewportPoint = camera.WorldToViewportPoint(worldPoint);
+        return viewportPoint.z > 0f
+            && viewportPoint.x >= 0f
+            && viewportPoint.x <= 1f
+            && viewportPoint.y >= 0f
+            && viewportPoint.y <= 1f;
     }
 }

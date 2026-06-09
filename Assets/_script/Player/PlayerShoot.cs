@@ -19,6 +19,7 @@ public class PlayerShoot : MonoBehaviour
 
     private float maxAttackSpeed = 80f;
     private int maxArrowsPerShot = 100;
+    private int maxShotBurstsPerFrame = 4;
 
     // 箭矢基礎速度，要跟 ArrowFly 裡的 speed 一致
     private float arrowBaseSpeed = 15f;
@@ -45,7 +46,7 @@ public class PlayerShoot : MonoBehaviour
         lastPosition = transform.position;
         timer += Time.deltaTime;
 
-        float actualAttackSpeed = stats.attackSpeed;
+        float actualAttackSpeed = Mathf.Max(0.1f, stats.attackSpeed);
         float speedDamageMultiplier = 1f;
 
         // 超過上限時，把多出來的攻速折算成傷害倍率
@@ -64,14 +65,21 @@ public class PlayerShoot : MonoBehaviour
             animController.animator.SetFloat("AttackSpeedParam", speedMultiplier);
         }
 
-        if (timer >= fireCooldown)
+        int shotBursts = 0;
+        while (timer >= fireCooldown && shotBursts < maxShotBurstsPerFrame)
         {
-            Shoot(speedDamageMultiplier);
+            Shoot(speedDamageMultiplier, actualAttackSpeed);
+            timer -= fireCooldown;
+            shotBursts++;
+        }
+
+        if (shotBursts == maxShotBurstsPerFrame && timer >= fireCooldown)
+        {
             timer = 0f;
         }
     }
 
-    void Shoot(float speedDamageMultiplier)
+    void Shoot(float speedDamageMultiplier, float effectiveAttackSpeed)
     {
         if (arrowPrefab == null)
         {
@@ -79,7 +87,7 @@ public class PlayerShoot : MonoBehaviour
             return;
         }
 
-        int actualArrowCount = stats.arrowCount;
+        int actualArrowCount = Mathf.Max(1, stats.arrowCount);
         float countDamageMultiplier = 1f;
 
         // 超過上限時，把多出來的箭數折算成傷害倍率
@@ -90,7 +98,7 @@ public class PlayerShoot : MonoBehaviour
         }
 
         float totalDamageMultiplier = speedDamageMultiplier * countDamageMultiplier;
-        float flightSpeedMultiplier = 1f + (stats.attackSpeed * 0.1f);
+        float flightSpeedMultiplier = 1f + (effectiveAttackSpeed * 0.1f);
 
         float actualRange = Mathf.Min(stats.attackRange, 90f);
         float estimatedTotalSpeed = arrowBaseSpeed * flightSpeedMultiplier + currentPlayerZSpeed;
