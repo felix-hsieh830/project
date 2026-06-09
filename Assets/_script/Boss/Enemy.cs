@@ -69,16 +69,19 @@ public class Enemy : MonoBehaviour
 
     public static void RefreshAllExtraEnemies(int desiredCount)
     {
-        foreach (Enemy enemy in allEnemies)
+        Enemy[] enemies = allEnemies.ToArray();
+        foreach (Enemy enemy in enemies)
         {
-            enemy.EnsureExtraEnemyCount(desiredCount);
+            if (enemy != null) enemy.EnsureExtraEnemyCount(desiredCount);
         }
     }
 
     public static void ClearAllExtraEnemies()
     {
-        foreach (Enemy enemy in allEnemies)
+        Enemy[] enemies = allEnemies.ToArray();
+        foreach (Enemy enemy in enemies)
         {
+            if (enemy == null) continue;
             if (enemy.isClone) Destroy(enemy.gameObject);
             else enemy.spawnedExtraEnemies = 0;
         }

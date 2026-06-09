@@ -141,7 +141,11 @@ public class BossHealth : MonoBehaviour
 
         // 🌟 改成在 Boss 位置生成獎勵箱，不直接跳獎勵介面
         GameManager gm = FindAnyObjectByType<GameManager>();
-        if (gm != null) gm.SpawnBossRewardChest(transform.position, isBigBoss);
+        if (gm != null)
+        {
+            gm.EndEnemyPlusOneStage();
+            gm.SpawnBossRewardChest(transform.position, isBigBoss);
+        }
 
         Destroy(gameObject);
     }

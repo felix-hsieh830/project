@@ -31,6 +31,9 @@ public class GameManager : MonoBehaviour
     private bool isBigBossReward = false;
     private PlayerStats playerStats;
     private bool isSpawning = false;
+    private bool enemyPlusOneWaitingForBoss = false;
+    private float enemyPlusOneTrackedBossZ = -1f;
+    private const float enemyPlusOneBossPassDistance = 30f;
 
     [Header("Boss 獎勵箱")]
     public GameObject bossRewardChestPrefab;
@@ -69,6 +72,8 @@ public class GameManager : MonoBehaviour
                 Invoke("ResetSpawnLock", 2.0f);
             }
         }
+
+        CheckEnemyPlusOneBossPassed();
     }
 
     private void ResetSpawnLock() { isSpawning = false; }
@@ -98,7 +103,6 @@ public class GameManager : MonoBehaviour
 
     public void ShowReward(bool isBigBoss)
     {
-        EndEnemyPlusOneStage();
         isBigBossReward = isBigBoss;
         rewardPanel.SetActive(true);
         Time.timeScale = 0f;
@@ -193,6 +197,8 @@ public class GameManager : MonoBehaviour
             case RewardType.Resist: playerStats.collisionResistLevel++; break;
             case RewardType.EnemyPlusOne:
                 playerStats.extraEnemies = 1;
+                enemyPlusOneWaitingForBoss = true;
+                enemyPlusOneTrackedBossZ = -1f;
                 Enemy.RefreshAllExtraEnemies(playerStats.extraEnemies);
                 break; // 🌟 只影響下一段 Boss 距離
             case RewardType.Magnet: playerStats.magnetLevel++; break;
@@ -201,12 +207,24 @@ public class GameManager : MonoBehaviour
 
     private void ResumeGame() { rewardPanel.SetActive(false); Time.timeScale = 1f; }
 
-    private void EndEnemyPlusOneStage()
+    public void EndEnemyPlusOneStage()
     {
         if (playerStats == null || playerStats.extraEnemies <= 0) return;
 
         playerStats.extraEnemies = 0;
+        enemyPlusOneWaitingForBoss = false;
+        enemyPlusOneTrackedBossZ = -1f;
         Enemy.ClearAllExtraEnemies();
+    }
+
+    private void CheckEnemyPlusOneBossPassed()
+    {
+        if (!enemyPlusOneWaitingForBoss || enemyPlusOneTrackedBossZ < 0f || playerStats == null) return;
+
+        if (playerStats.transform.position.z > enemyPlusOneTrackedBossZ + enemyPlusOneBossPassDistance)
+        {
+            EndEnemyPlusOneStage();
+        }
     }
 
     public string FormatNumber(float number)
@@ -239,6 +257,11 @@ public class GameManager : MonoBehaviour
                 spawnedBoss = Instantiate(smallBossPrefabs[randomIndex], spawnPos, Quaternion.identity);
                 if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * 2f);
             }
+        }
+
+        if (spawnedBoss != null && enemyPlusOneWaitingForBoss && enemyPlusOneTrackedBossZ < 0f)
+        {
+            enemyPlusOneTrackedBossZ = spawnedBoss.transform.position.z;
         }
     }
     public void SpawnBossRewardChest(Vector3 position, bool isBigBoss)
