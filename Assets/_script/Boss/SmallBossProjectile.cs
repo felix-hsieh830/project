@@ -5,25 +5,30 @@ public class SmallBossProjectile : MonoBehaviour
     private Transform target;
     private Vector3 direction;
     private float speed;
-    private float damagePercent;
+    private int damage;
     private float lifeTime;
     private float homingTime;
     private float turnSpeed;
     private float stopHomingDistance;
+    private Vector3 targetOffset;
+    private Vector3 visualRotationOffset;
+    private float hitRadius;
     private bool rotateVisual;
     private bool hasHit;
-    private const float HitRadius = 0.65f;
 
-    public void Setup(Transform target, Vector3 startDirection, float speed, float damagePercent, float lifeTime, float homingTime, float turnSpeed, float stopHomingDistance, bool rotateVisual)
+    public void Setup(Transform target, Vector3 startDirection, float speed, int damage, float lifeTime, float homingTime, float turnSpeed, float stopHomingDistance, Vector3 targetOffset, Vector3 visualRotationOffset, float hitRadius, bool rotateVisual)
     {
         this.target = target;
         this.direction = startDirection.normalized;
         this.speed = speed;
-        this.damagePercent = damagePercent;
+        this.damage = damage;
         this.lifeTime = lifeTime;
         this.homingTime = homingTime;
         this.turnSpeed = turnSpeed;
         this.stopHomingDistance = stopHomingDistance;
+        this.targetOffset = targetOffset;
+        this.visualRotationOffset = visualRotationOffset;
+        this.hitRadius = hitRadius;
         this.rotateVisual = rotateVisual;
 
         Destroy(gameObject, lifeTime);
@@ -33,7 +38,7 @@ public class SmallBossProjectile : MonoBehaviour
     {
         if (homingTime > 0f && target != null)
         {
-            Vector3 desired = target.position + new Vector3(0f, 0.9f, 0f) - transform.position;
+            Vector3 desired = target.position + targetOffset + new Vector3(0f, 0.9f, 0f) - transform.position;
             desired.y = 0f;
             if (stopHomingDistance > 0f && desired.sqrMagnitude <= stopHomingDistance * stopHomingDistance)
             {
@@ -48,7 +53,7 @@ public class SmallBossProjectile : MonoBehaviour
 
         float moveDistance = speed * Time.deltaTime;
         RaycastHit hit;
-        if (Physics.SphereCast(transform.position, HitRadius, direction, out hit, moveDistance, ~0, QueryTriggerInteraction.Collide))
+        if (Physics.SphereCast(transform.position, hitRadius, direction, out hit, moveDistance, ~0, QueryTriggerInteraction.Collide))
         {
             if (TryHitPlayer(hit.collider))
             {
@@ -60,7 +65,7 @@ public class SmallBossProjectile : MonoBehaviour
 
         if (direction.sqrMagnitude > 0.01f)
         {
-            transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+            transform.rotation = Quaternion.LookRotation(direction, Vector3.up) * Quaternion.Euler(visualRotationOffset);
         }
 
         if (rotateVisual)
@@ -82,8 +87,7 @@ public class SmallBossProjectile : MonoBehaviour
         if (player == null) return false;
 
         hasHit = true;
-        int damage = Mathf.Max(1, Mathf.CeilToInt(player.maxHp * damagePercent));
-        player.TakeDamage(damage);
+        player.TakeDamage(Mathf.Max(1, damage));
         Destroy(gameObject);
         return true;
     }

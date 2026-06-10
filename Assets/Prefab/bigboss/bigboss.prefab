@@ -762,14 +762,14 @@ RectTransform:
   m_GameObject: {fileID: 1887914567591529702}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.1, y: 1, z: 1}
+  m_LocalScale: {x: 0.3, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8140020348771395440}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.144, y: 1.783}
+  m_AnchoredPosition: {x: 0.144, y: 1.708}
   m_SizeDelta: {x: 20, y: 5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &494178358488687512
@@ -841,7 +841,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Sample text
+  m_text: 250000
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
   m_sharedMaterial: {fileID: 8836712136923502643, guid: 6173f9adce824c4409d95483d178d46a, type: 2}
@@ -3071,6 +3071,7 @@ MonoBehaviour:
   hp: 200
   currentHp: 0
   isBigBoss: 1
+  bigBossEngageDistance: 32
   hpText: {fileID: 4801526096441847373}
   isInvincible: 0
 --- !u!114 &4214992867333729288
@@ -3087,8 +3088,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BigBossAI
   moveSpeed: 4
   limitX: 4
-  laserPrefab: {fileID: 9046283866469649881, guid: 4cba6c0c1dbc2c84c99739749153a4c4, type: 3}
   fireRate: 1.5
+  warningTime: 0.55
+  phaseOneProjectileSpeed: 17
+  phaseOneProjectileLifeTime: 2.05
+  phaseOneProjectileDamagePercent: 0.2
+  laneWidth: 1.45
+  warningLength: 34
   minionPrefab: {fileID: 2886357501927858980, guid: 4a8c843d0920f48488cc1bedcc832702, type: 3}
   summonRate: 3
 --- !u!54 &423060573730586854

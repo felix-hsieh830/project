@@ -17,8 +17,6 @@ public class PlayerShoot : MonoBehaviour
     private float currentPlayerZSpeed = 0f;
     private Vector3 lastPosition;
 
-    private float maxAttackSpeed = 80f;
-    private int maxArrowsPerShot = 100;
     private int maxShotBurstsPerFrame = 4;
 
     // 箭矢基礎速度，要跟 ArrowFly 裡的 speed 一致
@@ -47,15 +45,6 @@ public class PlayerShoot : MonoBehaviour
         timer += Time.deltaTime;
 
         float actualAttackSpeed = Mathf.Max(0.1f, stats.attackSpeed);
-        float speedDamageMultiplier = 1f;
-
-        // 超過上限時，把多出來的攻速折算成傷害倍率
-        if (actualAttackSpeed > maxAttackSpeed)
-        {
-            speedDamageMultiplier = actualAttackSpeed / maxAttackSpeed;
-            actualAttackSpeed = maxAttackSpeed;
-        }
-
         float fireCooldown = 1f / actualAttackSpeed;
 
         // 🌟 同步動畫速度倍率
@@ -68,7 +57,7 @@ public class PlayerShoot : MonoBehaviour
         int shotBursts = 0;
         while (timer >= fireCooldown && shotBursts < maxShotBurstsPerFrame)
         {
-            Shoot(speedDamageMultiplier, actualAttackSpeed);
+            Shoot(actualAttackSpeed);
             timer -= fireCooldown;
             shotBursts++;
         }
@@ -79,7 +68,7 @@ public class PlayerShoot : MonoBehaviour
         }
     }
 
-    void Shoot(float speedDamageMultiplier, float effectiveAttackSpeed)
+    void Shoot(float effectiveAttackSpeed)
     {
         if (arrowPrefab == null)
         {
@@ -88,16 +77,6 @@ public class PlayerShoot : MonoBehaviour
         }
 
         int actualArrowCount = Mathf.Max(1, stats.arrowCount);
-        float countDamageMultiplier = 1f;
-
-        // 超過上限時，把多出來的箭數折算成傷害倍率
-        if (actualArrowCount > maxArrowsPerShot)
-        {
-            countDamageMultiplier = (float)actualArrowCount / maxArrowsPerShot;
-            actualArrowCount = maxArrowsPerShot;
-        }
-
-        float totalDamageMultiplier = speedDamageMultiplier * countDamageMultiplier;
         float flightSpeedMultiplier = 1f + (effectiveAttackSpeed * 0.1f);
 
         float actualRange = Mathf.Min(stats.attackRange, 90f);
@@ -123,7 +102,7 @@ public class PlayerShoot : MonoBehaviour
             ArrowFly arrowScript = arrow.GetComponent<ArrowFly>();
             if (arrowScript != null)
             {
-                float finalBaseDamage = stats.baseDamage * totalDamageMultiplier;
+                float finalBaseDamage = stats.baseDamage;
                 arrowScript.ApplyVisualColor(stats.GetArrowColor(), stats.arrowWoodColor, stats.GetArrowEmissionColor(), stats.arrowWoodEmissionColor, true);
                 arrowScript.Setup(finalBaseDamage, stats.attackRange, stats.critRate, stats.critDamage, currentPlayerZSpeed, flightSpeedMultiplier, yawRate, stats);
             }

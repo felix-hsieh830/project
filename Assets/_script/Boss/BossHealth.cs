@@ -8,6 +8,7 @@ public class BossHealth : MonoBehaviour
     public float hp = 1000f;
     public float currentHp;
     public bool isBigBoss = false;
+    public float bigBossEngageDistance = 32f;
 
     [Header("UI 顯示")]
     public TextMeshPro hpText;
@@ -39,13 +40,13 @@ public class BossHealth : MonoBehaviour
             {
                 float distanceToPlayer = transform.position.z - playerMove.transform.position.z;
 
-                // 玩家抵達 20 公尺處
-                if (distanceToPlayer <= 20f && distanceToPlayer > 0)
+                if (distanceToPlayer <= bigBossEngageDistance && distanceToPlayer > 0)
                 {
                     playerMove.isFightingBigBoss = true; // 強制玩家停車
 
                     // 🌟 1. Boss 進入登場無敵狀態
                     isInvincible = true;
+                    FindAnyObjectByType<LevelManager>()?.BeginBigBossArena(transform.position.z);
 
                     // 🌟 2. 呼叫攝影機往下沉
                     if (Camera.main != null)
@@ -68,8 +69,9 @@ public class BossHealth : MonoBehaviour
     {
         Debug.Log("🎥 大 Boss 登場運鏡中...無敵狀態！");
 
-        // 給攝影機 2.5 秒的時間運鏡，這段時間子彈打上來都無效
-        yield return new WaitForSeconds(2.5f);
+        yield return new WaitForSeconds(2.0f);
+
+        yield return new WaitForSeconds(0.5f);
 
         isInvincible = false; // 解除無敵
         Debug.Log("⚔️ 戰鬥正式開始！");
@@ -110,6 +112,11 @@ public class BossHealth : MonoBehaviour
             int damageToPlayer = Mathf.RoundToInt(currentHp);
             player.TakeDamage(damageToPlayer);
 
+            if (isBigBoss)
+            {
+                EndBigBossCleanup();
+            }
+
             if (player.currentHp > 0)
             {
                 if (isBigBoss)
@@ -136,6 +143,7 @@ public class BossHealth : MonoBehaviour
         {
             PlayerMove playerMove = FindAnyObjectByType<PlayerMove>();
             if (playerMove != null) playerMove.isFightingBigBoss = false;
+            EndBigBossCleanup();
             if (Camera.main != null) Camera.main.GetComponent<CameraFollow>()?.SwitchToNormalCamera();
         }
 
@@ -149,6 +157,12 @@ public class BossHealth : MonoBehaviour
 
         Destroy(gameObject);
     }
+
+    private void EndBigBossCleanup()
+    {
+        FindAnyObjectByType<LevelManager>()?.EndBigBossArena();
+    }
+
     public string FormatNumber(float number)
     {
         if (number >= 1000000000) return (number / 1000000000f).ToString("0.##") + "B";

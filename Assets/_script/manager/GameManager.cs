@@ -36,6 +36,8 @@ public class GameManager : MonoBehaviour
     public GameObject[] smallBossPrefabs;
     public GameObject bigBossPrefab;
     public float bossSpawnDistance = 55f;
+    public float bigBossExtraSpawnDistance = 18f;
+    public GameObject smallBossClawProjectilePrefab;
 
     private bool isBigBossReward = false;
     private PlayerStats playerStats;
@@ -44,6 +46,7 @@ public class GameManager : MonoBehaviour
     private float enemyPlusOneTrackedBossZ = -1f;
     private const float enemyPlusOneBossPassDistance = 30f;
     private int smallBossAttackPatternIndex = 0;
+    private int smallBossEncounterCount = 0;
 
     [Header("Boss 獎勵箱")]
     public GameObject bossRewardChestPrefab;
@@ -60,6 +63,7 @@ public class GameManager : MonoBehaviour
     // 🌟 這裡改成 EnemyPlusOne
     public enum RewardType { Light, Heavy, Multi, BigAtk, BigSpd, BigHp, Lifesteal, Resist, EnemyPlusOne, Magnet }
     private List<RewardType> currentOptions = new List<RewardType>();
+    private List<string> collectedRewardIcons = new List<string>();
 
     void Start()
     {
@@ -92,6 +96,7 @@ public class GameManager : MonoBehaviour
                 bossSpawnCount++;
                 bool isBigBoss = (bossSpawnCount % 4 == 0);
                 float bossWorldZ = (nextBossDistance + bossOffset) + 35f;
+                if (isBigBoss) bossWorldZ += bigBossExtraSpawnDistance;
                 SpawnBoss(isBigBoss, bossWorldZ);
                 nextBossDistance += bossInterval;
                 Invoke("ResetSpawnLock", 2.0f);
@@ -150,7 +155,7 @@ public class GameManager : MonoBehaviour
         if (distance > bestDist) PlayerPrefs.SetInt("BestDistance", distance);
         int bestKill = PlayerPrefs.GetInt("BestKills", 0);
         if (kills > bestKill) PlayerPrefs.SetInt("BestKills", kills);
-        GameRecordStore.AddRecord(distance, kills, Time.realtimeSinceStartup - runStartRealtime);
+        GameRecordStore.AddRecord(distance, kills, Time.realtimeSinceStartup - runStartRealtime, string.Join(",", collectedRewardIcons));
         PlayerPrefs.Save();
         Time.timeScale = 0f;
     }
@@ -636,58 +641,76 @@ public class GameManager : MonoBehaviour
 
     private void GenerateRewards()
     {
-        List<RewardType> pool = new List<RewardType>();
+        currentOptions.Clear();
 
-        if (!isBigBossReward)
+        if (isBigBossReward)
         {
-            pool.Add(RewardType.Light); pool.Add(RewardType.Heavy); pool.Add(RewardType.Multi);
-
-            if (playerStats.lifestealLevel < 3) pool.Add(RewardType.Lifesteal);
-            if (playerStats.collisionResistLevel < 3) pool.Add(RewardType.Resist);
-            pool.Add(RewardType.EnemyPlusOne); // 🌟 只影響下一段 Boss 距離
-            if (playerStats.magnetLevel < 3) pool.Add(RewardType.Magnet);
+            currentOptions.Add(RewardType.BigAtk);
+            currentOptions.Add(RewardType.BigSpd);
+            currentOptions.Add(RewardType.BigHp);
         }
         else
         {
-            pool.Add(RewardType.BigAtk);
-            pool.Add(RewardType.BigSpd);
-            pool.Add(RewardType.BigHp);
+            List<RewardType> stylePool = new List<RewardType> { RewardType.Light, RewardType.Heavy, RewardType.Multi };
+            ShuffleRewards(stylePool);
+
+            currentOptions.Add(stylePool[0]);
+            currentOptions.Add(stylePool[1]);
+            currentOptions.Add(PickSupportReward());
         }
 
-        for (int i = 0; i < pool.Count; i++)
-        {
-            RewardType temp = pool[i];
-            int randomIndex = Random.Range(i, pool.Count);
-            pool[i] = pool[randomIndex];
-            pool[randomIndex] = temp;
-        }
-
-        currentOptions.Clear();
-        int optionCount = 3;
-        if (buttonCObject != null) buttonCObject.SetActive(optionCount >= 3);
-        for (int i = 0; i < optionCount; i++)
-        {
-            if (i < pool.Count) currentOptions.Add(pool[i]);
-        }
-
+        if (buttonCObject != null) buttonCObject.SetActive(currentOptions.Count >= 3);
         if (currentOptions.Count > 0) UpdateButtonUI(btnAText, currentOptions[0]);
         if (currentOptions.Count > 1) UpdateButtonUI(btnBText, currentOptions[1]);
         if (currentOptions.Count > 2) UpdateButtonUI(btnCText, currentOptions[2]);
         else if (btnCText != null) btnCText.text = "";
     }
 
+    private void ShuffleRewards(List<RewardType> rewards)
+    {
+        for (int i = 0; i < rewards.Count; i++)
+        {
+            RewardType temp = rewards[i];
+            int randomIndex = Random.Range(i, rewards.Count);
+            rewards[i] = rewards[randomIndex];
+            rewards[randomIndex] = temp;
+        }
+    }
+
+    private RewardType PickSupportReward()
+    {
+        List<RewardType> pool = new List<RewardType>();
+
+        if (playerStats.lifestealLevel < 3) AddWeightedReward(pool, RewardType.Lifesteal, 2);
+        if (playerStats.collisionResistLevel < 3) AddWeightedReward(pool, RewardType.Resist, 2);
+        if (playerStats.magnetLevel < 3) AddWeightedReward(pool, RewardType.Magnet, 1);
+        AddWeightedReward(pool, RewardType.EnemyPlusOne, 1);
+
+        if (pool.Count == 0) return RewardType.EnemyPlusOne;
+        return pool[Random.Range(0, pool.Count)];
+    }
+
+    private void AddWeightedReward(List<RewardType> pool, RewardType reward, int weight)
+    {
+        for (int i = 0; i < weight; i++)
+        {
+            pool.Add(reward);
+        }
+    }
+
     private void UpdateButtonUI(TextMeshProUGUI btnText, RewardType type)
     {
         SetRewardTitle(btnText, GetRewardTitle(type));
+        SetRewardIcon(btnText, type);
 
         switch (type)
         {
-            case RewardType.Light: btnText.text = "\n<color=#8EF18E>射速 +50%</color>\n<color=#FF5E57>傷害 -20%</color>"; break;
-            case RewardType.Heavy: btnText.text = "\n<color=#8EF18E>攻擊力 +15</color>\n<color=#FF5E57>攻速 -20%</color>"; break;
-            case RewardType.Multi: btnText.text = "\n<color=#8EF18E>箭矢數量 +2</color>\n<color=#FF5E57>傷害 -50%</color>"; break;
-            case RewardType.BigAtk: btnText.text = "\n<color=#FFE66B>攻擊力 x2</color>\n王牌爆發"; break;
-            case RewardType.BigSpd: btnText.text = "\n<color=#FFE66B>攻擊速度 x2</color>\n狂暴連射"; break;
-            case RewardType.BigHp: btnText.text = "\n<color=#FFE66B>生命 x2</color>\n存活強化"; break;
+            case RewardType.Light: btnText.text = "\n<color=#8EF18E>射速 +35%</color>\n<color=#FF5E57>傷害 -25%</color>"; break;
+            case RewardType.Heavy: btnText.text = "\n<color=#8EF18E>攻擊力 +9</color>\n<color=#FF5E57>攻速 -18%</color>"; break;
+            case RewardType.Multi: btnText.text = "\n<color=#8EF18E>箭矢數量 +1</color>\n<color=#FF5E57>傷害 -28%</color>"; break;
+            case RewardType.BigAtk: btnText.text = "\n<color=#FFE66B>攻擊力 x1.5</color>\n王牌爆發"; break;
+            case RewardType.BigSpd: btnText.text = "\n<color=#FFE66B>攻擊速度 x1.4</color>\n狂暴連射"; break;
+            case RewardType.BigHp: btnText.text = "\n<color=#FFE66B>生命 +50%</color>\n存活強化"; break;
             case RewardType.Lifesteal: btnText.text = $"\n<color=#8EF18E>吸血 Lv{playerStats.lifestealLevel + 1}</color>\n傷害 {(playerStats.lifestealLevel + 1) * 5}% 回血"; break;
             case RewardType.Resist: btnText.text = $"\n<color=#8EF18E>抗撞 Lv{playerStats.collisionResistLevel + 1}</color>\n撞擊減傷 {(playerStats.collisionResistLevel + 1) * 10}%"; break;
             case RewardType.EnemyPlusOne: btnText.text = "\n<color=#8EF18E>下一段怪物 +1</color>\n通過 Boss 後結束"; break;
@@ -711,6 +734,38 @@ public class GameManager : MonoBehaviour
             case RewardType.Magnet: return "金幣磁鐵";
             default: return "獎勵";
         }
+    }
+
+    private string GetRewardIconKey(RewardType type)
+    {
+        return type.ToString();
+    }
+
+    private void SetRewardIcon(TextMeshProUGUI effectText, RewardType type)
+    {
+        if (effectText == null) return;
+
+        Transform card = effectText.GetComponentInParent<Button>(true)?.transform;
+        if (card == null) return;
+
+        Image image = card.Find("ImageSlot")?.GetComponent<Image>();
+        if (image == null) return;
+
+        Sprite sprite = Resources.Load<Sprite>("RewardIcons/" + GetRewardIconKey(type));
+        if (sprite == null)
+        {
+            Texture2D texture = Resources.Load<Texture2D>("RewardIcons/" + GetRewardIconKey(type));
+            if (texture != null)
+            {
+                sprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+            }
+        }
+
+        if (sprite == null) return;
+
+        image.sprite = sprite;
+        image.preserveAspect = true;
+        image.color = Color.white;
     }
 
     private void SetRewardTitle(TextMeshProUGUI effectText, string title)
@@ -749,27 +804,31 @@ public class GameManager : MonoBehaviour
     private void ApplyReward(RewardType type)
     {
         if (playerStats == null) return;
+        if (collectedRewardIcons.Count < 12)
+        {
+            collectedRewardIcons.Add(GetRewardIconKey(type));
+        }
 
         switch (type)
         {
             case RewardType.Light:
-                playerStats.attackSpeed += 1.5f;
-                playerStats.baseDamage *= 0.8f;
+                playerStats.attackSpeed *= 1.35f;
+                playerStats.baseDamage *= 0.75f;
                 playerStats.RegisterArrowStyle(PlayerStats.ArrowStyle.Speed);
                 break;
             case RewardType.Heavy:
-                playerStats.baseDamage += 15f;
-                playerStats.attackSpeed *= 0.8f;
+                playerStats.baseDamage += 9f;
+                playerStats.attackSpeed *= 0.82f;
                 playerStats.RegisterArrowStyle(PlayerStats.ArrowStyle.Attack);
                 break;
             case RewardType.Multi:
-                playerStats.arrowCount += 2;
-                playerStats.baseDamage *= 0.5f;
+                playerStats.arrowCount += 1;
+                playerStats.baseDamage *= 0.72f;
                 playerStats.RegisterArrowStyle(PlayerStats.ArrowStyle.Multi);
                 break;
-            case RewardType.BigAtk: playerStats.baseDamage *= 2f; break;
-            case RewardType.BigSpd: playerStats.attackSpeed *= 2f; break;
-            case RewardType.BigHp: playerStats.AddMaxHealth(playerStats.maxHp); break;
+            case RewardType.BigAtk: playerStats.baseDamage *= 1.5f; break;
+            case RewardType.BigSpd: playerStats.attackSpeed *= 1.4f; break;
+            case RewardType.BigHp: playerStats.AddMaxHealth(Mathf.RoundToInt(playerStats.maxHp * 0.5f)); break;
             case RewardType.Lifesteal: playerStats.lifestealLevel++; break;
             case RewardType.Resist: playerStats.collisionResistLevel++; break;
             case RewardType.EnemyPlusOne:
@@ -815,16 +874,16 @@ public class GameManager : MonoBehaviour
     private void SpawnBoss(bool isBigBoss, float targetZ)
     {
         Vector3 spawnPos = new Vector3(0, 1.5f, targetZ);
-        float baseEnemyMaxHp = 50f;
+        float baseEnemyMaxHp = 75f;
         float scalingDistance = Mathf.Max(0, spawnPos.z - 30f);
         float stage = Mathf.Floor(scalingDistance / 40f);
-        float currentEnemyHp = Mathf.Round(baseEnemyMaxHp * Mathf.Pow(1.1f, stage));
+        float currentEnemyHp = Mathf.Round(baseEnemyMaxHp * Mathf.Pow(1.13f, stage));
         GameObject spawnedBoss = null;
 
         if (isBigBoss)
         {
             spawnedBoss = Instantiate(bigBossPrefab, spawnPos, Quaternion.identity);
-            if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * 5f);
+            if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * 4f);
         }
         else
         {
@@ -832,7 +891,7 @@ public class GameManager : MonoBehaviour
             {
                 int randomIndex = Random.Range(0, smallBossPrefabs.Length);
                 spawnedBoss = Instantiate(smallBossPrefabs[randomIndex], spawnPos, Quaternion.identity);
-                if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * 2f);
+                if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * 1.55f);
                 SetupSmallBossAttack(spawnedBoss);
             }
         }
@@ -866,6 +925,11 @@ public class GameManager : MonoBehaviour
         int patternCount = System.Enum.GetValues(typeof(SmallBossAttackAI.AttackPattern)).Length;
         SmallBossAttackAI.AttackPattern pattern = (SmallBossAttackAI.AttackPattern)(smallBossAttackPatternIndex % patternCount);
         smallBossAttackPatternIndex++;
+        smallBossEncounterCount++;
+        attackAI.clawProjectilePrefab = smallBossClawProjectilePrefab;
+        attackAI.clawPrefabRotationOffset = new Vector3(-90f, 0f, 0f);
+        attackAI.clawPrefabScale = Vector3.one * 2f;
         attackAI.SetPattern(pattern);
+        attackAI.ApplyEncounterScaling(smallBossEncounterCount);
     }
 }

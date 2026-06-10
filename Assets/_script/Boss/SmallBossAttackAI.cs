@@ -13,7 +13,6 @@ public class SmallBossAttackAI : MonoBehaviour
 
     [Header("共用設定")]
     public int damage = 18;
-    public float damagePercent = 0.1f;
     public float attackInterval = 1.35f;
     public float spawnHeight = 0.45f;
 
@@ -22,7 +21,14 @@ public class SmallBossAttackAI : MonoBehaviour
     public float clawHomingDuration = 0.85f;
     public float clawTurnSpeed = 8.5f;
     public float clawStopHomingDistance = 4.5f;
-    public float clawAngle = 14f;
+    public float clawAngle = 18f;
+    public float clawTargetSpread = 1.6f;
+    public float clawHitRadius = 0.26f;
+    public Color clawBodyColor = new Color(0.35f, 0.08f, 0.95f, 1f);
+    public Color clawTrailColor = new Color(0.85f, 0.22f, 1f, 0.85f);
+    public GameObject clawProjectilePrefab;
+    public Vector3 clawPrefabRotationOffset = Vector3.zero;
+    public Vector3 clawPrefabScale = Vector3.one;
 
     [Header("直線火球")]
     public float fireballSpawnHeight = 0.15f;
@@ -92,21 +98,36 @@ public class SmallBossAttackAI : MonoBehaviour
         switch (attackPattern)
         {
             case AttackPattern.ClawTriple:
-                attackInterval = 1.35f;
-                activeDistance = 72f;
-                damage = 18;
+                attackInterval = 1.75f;
+                activeDistance = 66f;
+                damage = 12;
                 break;
             case AttackPattern.FireballLine:
-                attackInterval = 1.55f;
-                activeDistance = 78f;
-                damage = 16;
+                attackInterval = 1.95f;
+                activeDistance = 70f;
+                damage = 10;
                 break;
             case AttackPattern.ThornLanes:
-                attackInterval = 2.1f;
-                activeDistance = 82f;
-                damage = 22;
+                attackInterval = 2.55f;
+                activeDistance = 74f;
+                damage = 14;
                 break;
         }
+    }
+
+    public void ApplyEncounterScaling(int encounterIndex)
+    {
+        float speedMultiplier;
+        if (encounterIndex <= 1) speedMultiplier = 0.55f;
+        else if (encounterIndex == 2) speedMultiplier = 0.7f;
+        else if (encounterIndex == 3) speedMultiplier = 0.85f;
+        else speedMultiplier = Mathf.Min(1.12f, 0.95f + (encounterIndex - 4) * 0.05f);
+
+        attackInterval /= speedMultiplier;
+        fireballBurstSpacing /= speedMultiplier;
+        clawSpeed *= Mathf.Lerp(0.78f, 1.02f, Mathf.InverseLerp(1f, 6f, encounterIndex));
+        fireballSpeed *= Mathf.Lerp(0.78f, 1.02f, Mathf.InverseLerp(1f, 6f, encounterIndex));
+        damage = Mathf.Max(1, Mathf.RoundToInt(damage * Mathf.Lerp(0.75f, 1f, Mathf.InverseLerp(1f, 5f, encounterIndex))));
     }
 
     private void ShootClawTriple()
@@ -117,11 +138,16 @@ public class SmallBossAttackAI : MonoBehaviour
         for (int i = -1; i <= 1; i++)
         {
             Vector3 dir = Quaternion.Euler(0f, i * clawAngle, 0f) * targetDir;
-            GameObject claw = CreateProjectileObject("ClawProjectile", spawnPos, Color.magenta, PrimitiveType.Capsule, new Vector3(0.22f, 0.22f, 0.9f));
-            claw.transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
+            GameObject claw = CreateClawProjectile(spawnPos, dir);
 
-            SmallBossProjectile projectile = claw.AddComponent<SmallBossProjectile>();
-            projectile.Setup(player.transform, dir, clawSpeed, damagePercent, 4.2f, clawHomingDuration, clawTurnSpeed, clawStopHomingDistance, true);
+            SmallBossProjectile projectile = claw.GetComponent<SmallBossProjectile>();
+            if (projectile == null)
+            {
+                projectile = claw.AddComponent<SmallBossProjectile>();
+            }
+            Vector3 targetOffset = new Vector3(i * clawTargetSpread, 0f, 0f);
+            bool spinVisual = clawProjectilePrefab == null;
+            projectile.Setup(player.transform, dir, clawSpeed, damage, 4.2f, clawHomingDuration, clawTurnSpeed, clawStopHomingDistance, targetOffset, clawPrefabRotationOffset, clawHitRadius, spinVisual);
         }
     }
 
@@ -151,15 +177,10 @@ public class SmallBossAttackAI : MonoBehaviour
 
         GameObject fireball = CreateProjectileObject("FireballProjectile", spawnPos, new Color(1f, 0.32f, 0.05f, 1f), PrimitiveType.Sphere, Vector3.one * 0.55f);
         fireball.transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
-
-        TrailRenderer trail = fireball.AddComponent<TrailRenderer>();
-        trail.time = 0.18f;
-        trail.startWidth = 0.34f;
-        trail.endWidth = 0f;
-        trail.material = CreateRuntimeMaterial(new Color(1f, 0.22f, 0.02f, 0.85f));
+        AddFireballVfx(fireball);
 
         SmallBossProjectile projectile = fireball.AddComponent<SmallBossProjectile>();
-        projectile.Setup(player.transform, dir, fireballSpeed, damagePercent, 3.5f, 0f, 0f, 0f, false);
+        projectile.Setup(player.transform, dir, fireballSpeed, damage, 3.5f, 0f, 0f, 0f, Vector3.zero, Vector3.zero, 0.65f, false);
     }
 
     private void SpawnThornLanes()
@@ -176,14 +197,82 @@ public class SmallBossAttackAI : MonoBehaviour
             hazard.name = "ThornLaneWarning";
             hazard.transform.position = pos;
             hazard.transform.localScale = new Vector3(thornLaneWidth, 0.08f, thornLength);
-            hazard.GetComponent<Renderer>().material = CreateRuntimeMaterial(new Color(1f, 0.06f, 0.02f, 0.55f));
+            hazard.GetComponent<Renderer>().material = CreateRuntimeMaterial(new Color(0.28f, 0.85f, 0.2f, 0.45f));
 
             Collider collider = hazard.GetComponent<Collider>();
             if (collider != null) collider.isTrigger = true;
 
             SmallBossLaneHazard laneHazard = hazard.AddComponent<SmallBossLaneHazard>();
-            laneHazard.Setup(damagePercent, thornWarningTime, thornActiveTime);
+            laneHazard.Setup(damage, thornWarningTime, thornActiveTime);
         }
+    }
+
+    private GameObject CreateClawProjectile(Vector3 spawnPos, Vector3 direction)
+    {
+        GameObject claw;
+        if (clawProjectilePrefab != null)
+        {
+            Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up) * Quaternion.Euler(clawPrefabRotationOffset);
+            claw = Instantiate(clawProjectilePrefab, spawnPos, rotation);
+            claw.name = "ClawProjectile";
+            claw.transform.localScale = Vector3.Scale(claw.transform.localScale, clawPrefabScale);
+            EnsureTriggerColliders(claw);
+        }
+        else
+        {
+            claw = CreateProjectileObject("ClawProjectile", spawnPos, clawBodyColor, PrimitiveType.Capsule, new Vector3(0.22f, 0.22f, 0.9f));
+            claw.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+        }
+
+        if (claw.GetComponent<TrailRenderer>() == null)
+        {
+            AddTrail(claw, clawTrailColor, 0.22f, 0.16f);
+        }
+
+        return claw;
+    }
+
+    private void EnsureTriggerColliders(GameObject target)
+    {
+        Collider[] colliders = target.GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            if (colliders[i] != null)
+            {
+                colliders[i].enabled = false;
+            }
+        }
+
+        SphereCollider sphere = target.GetComponent<SphereCollider>();
+        if (sphere == null)
+        {
+            sphere = target.AddComponent<SphereCollider>();
+        }
+
+        sphere.radius = clawHitRadius;
+        sphere.center = Vector3.zero;
+        sphere.isTrigger = true;
+        sphere.enabled = true;
+    }
+
+    private void AddTrail(GameObject target, Color color, float startWidth, float time)
+    {
+        TrailRenderer trail = target.AddComponent<TrailRenderer>();
+        trail.time = time;
+        trail.startWidth = startWidth;
+        trail.endWidth = 0f;
+        trail.material = CreateRuntimeMaterial(color);
+    }
+
+    private void AddFireballVfx(GameObject fireball)
+    {
+        AddTrail(fireball, new Color(1f, 0.22f, 0.02f, 0.9f), 0.42f, 0.24f);
+
+        Light light = fireball.AddComponent<Light>();
+        light.type = LightType.Point;
+        light.color = new Color(1f, 0.35f, 0.06f, 1f);
+        light.range = 3.2f;
+        light.intensity = 2.2f;
     }
 
     private Vector3 GetFlatDirectionToPlayer(Vector3 from)

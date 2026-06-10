@@ -46,17 +46,29 @@ public class BuffGate : MonoBehaviour
             case BuffType.MaxHP: buffNameInChinese = "最大生命"; break;
         }
 
-        buffText.text = $"{buffNameInChinese}\n+{buffValue}";
+        if (myBuffType == BuffType.CritRate)
+        {
+            buffText.text = $"{buffNameInChinese}\n+{FormatPercent(buffValue)}";
+        }
+        else
+        {
+            buffText.text = $"{buffNameInChinese}\n+{buffValue}";
+        }
     }
 
     void RollBuffType()
     {
         int roll = Random.Range(0, 100);
-        if (roll < 20) myBuffType = BuffType.AttackSpeed;
-        else if (roll < 40) myBuffType = BuffType.CritRate;
-        else if (roll < 60) myBuffType = BuffType.AttackRange;
-        else if (roll < 80) myBuffType = BuffType.MaxHP;
-        else myBuffType = BuffType.Damage;
+        if (roll < 24) myBuffType = BuffType.Damage;
+        else if (roll < 48) myBuffType = BuffType.AttackSpeed;
+        else if (roll < 66) myBuffType = BuffType.AttackRange;
+        else if (roll < 82) myBuffType = BuffType.MaxHP;
+        else myBuffType = BuffType.CritRate;
+    }
+
+    string FormatPercent(float value)
+    {
+        return (value * 100f).ToString("0.#") + "%";
     }
 
     void RollBuffValue()
@@ -64,32 +76,38 @@ public class BuffGate : MonoBehaviour
         float baseVal = 0;
         switch (myBuffType)
         {
-            case BuffType.AttackSpeed: baseVal = 0.3f; break;  // 🌟 0.2 → 0.3
-            case BuffType.AttackRange: baseVal = 1.5f; break; // 🌟 4 → 1.5
-            case BuffType.CritRate: baseVal = 0.05f; break;
-            case BuffType.Damage: baseVal = 4f; break;         // 🌟 2 → 4
-            case BuffType.MaxHP: baseVal = 30f; break;         // 🌟 20 → 30
+            case BuffType.AttackSpeed: baseVal = 0.18f; break;
+            case BuffType.AttackRange: baseVal = 1.0f; break;
+            case BuffType.CritRate: baseVal = 0.01f; break;
+            case BuffType.Damage: baseVal = 2.5f; break;
+            case BuffType.MaxHP: baseVal = 20f; break;
         }
 
         int rarityRoll = Random.Range(0, 100);
         float rarityMultiplier = 1f;
 
-        if (rarityRoll < 60) { rarityMultiplier = 1f; rarity = "普通"; }
-        else if (rarityRoll < 90) { rarityMultiplier = 1.5f; rarity = "稀有"; }
-        else { rarityMultiplier = 2f; rarity = "傳說"; }
+        if (rarityRoll < 72) { rarityMultiplier = 1f; rarity = "普通"; }
+        else if (rarityRoll < 95) { rarityMultiplier = 1.35f; rarity = "稀有"; }
+        else { rarityMultiplier = 1.8f; rarity = "傳說"; }
 
         float scalingDistance = transform.position.z - 30f;
         if (scalingDistance < 0) scalingDistance = 0;
 
-        // 🌟 每 40m 一階段（從 100m），成長更有感
-        float stage = Mathf.Floor(scalingDistance / 40f);
-        float distanceMultiplier = 1f + stage * 0.12f; // 🌟 改用加法，每階段+12%
+        float stage = Mathf.Floor(scalingDistance / 80f);
+        float distanceMultiplier = 1f + stage * 0.06f;
 
         buffValue = baseVal * rarityMultiplier * distanceMultiplier;
 
+        if (myBuffType == BuffType.AttackRange)
+        {
+            buffValue = rarity == "普通" ? 1f : 2f;
+        }
+
         if (myBuffType == BuffType.MaxHP)
             buffValue = Mathf.Round(buffValue);
-        else if (myBuffType == BuffType.CritRate || myBuffType == BuffType.AttackSpeed)
+        else if (myBuffType == BuffType.CritRate)
+            buffValue = (float)System.Math.Round(buffValue, 3);
+        else if (myBuffType == BuffType.AttackSpeed)
             buffValue = (float)System.Math.Round(buffValue, 2);
         else
             buffValue = (float)System.Math.Round(buffValue, 1);

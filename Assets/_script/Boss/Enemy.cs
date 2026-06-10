@@ -49,8 +49,8 @@ public class Enemy : MonoBehaviour
         if (!skipInitialHpScaling)
         {
             float scalingDistance = Mathf.Max(0, transform.position.z - 30f);
-            float stage = Mathf.Floor(scalingDistance / 80f); // 🌟 40 → 80，成長放慢
-            maxHp = Mathf.Round(maxHp + stage * maxHp * 0.15f); // 🌟 改用加法，每階段+15%基礎HP
+            float stage = Mathf.Floor(scalingDistance / 80f);
+            maxHp = Mathf.Round(maxHp * (1.45f + stage * 0.28f));
         }
 
         currentHp = maxHp;

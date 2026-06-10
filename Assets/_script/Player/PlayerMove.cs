@@ -5,6 +5,8 @@ public class PlayerMove : MonoBehaviour
     [Header("移動速度設定")]
     public float forwardSpeed = 5f;
     public float horizontalSpeed = 5f;
+    public float maxForwardSpeed = 12f;
+    public float maxHorizontalSpeed = 12f;
 
     [Header("加速設定")]
     public float speedPerHundredMeters = 0.5f;
@@ -52,10 +54,11 @@ public class PlayerMove : MonoBehaviour
         if (!isFightingBigBoss)
         {
             float extraSpeed = (distance / 100f) * speedPerHundredMeters;
-            currentForwardSpeed = forwardSpeed + extraSpeed;
+            currentForwardSpeed = Mathf.Min(forwardSpeed + extraSpeed, maxForwardSpeed);
         }
 
-        Vector3 movement = new Vector3(horizontalInput * horizontalSpeed, 0, currentForwardSpeed);
+        float currentHorizontalSpeed = Mathf.Min(horizontalSpeed, maxHorizontalSpeed);
+        Vector3 movement = new Vector3(horizontalInput * currentHorizontalSpeed, 0, currentForwardSpeed);
         transform.Translate(movement * Time.deltaTime, Space.World);
 
         Vector3 pos = transform.position;

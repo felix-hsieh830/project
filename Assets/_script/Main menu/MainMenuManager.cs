@@ -234,7 +234,8 @@ public class MainMenuManager : MonoBehaviour
         CreateText(parent, "ColumnScore", "距離", new Vector2(-142f, 217f), new Vector2(82f, 28f), 17f, gold);
         CreateText(parent, "ColumnDate", "日期", new Vector2(-12f, 217f), new Vector2(112f, 28f), 17f, gold);
         CreateText(parent, "ColumnKills", "擊殺", new Vector2(132f, 217f), new Vector2(70f, 28f), 17f, gold);
-        CreateText(parent, "ColumnTime", "時間", new Vector2(230f, 217f), new Vector2(70f, 28f), 17f, gold);
+        CreateText(parent, "ColumnTime", "時間", new Vector2(190f, 217f), new Vector2(60f, 28f), 17f, gold);
+        CreateText(parent, "ColumnRewards", "獎勵", new Vector2(252f, 217f), new Vector2(70f, 28f), 17f, gold);
     }
 
     private void CreateRecordsScroll(Transform parent)
@@ -355,7 +356,45 @@ public class MainMenuManager : MonoBehaviour
         CreateText(row.transform, "Distance", FormatNumber(record.distance) + "m", new Vector2(-142f, 0f), new Vector2(82f, 32f), 19f, new Color(1f, 0.90f, 0.55f, 1f)).fontStyle = FontStyles.Bold;
         CreateText(row.transform, "Date", ShortDate(record.date), new Vector2(-12f, 0f), new Vector2(112f, 32f), 15f, new Color(0.83f, 0.72f, 0.52f, 1f));
         CreateText(row.transform, "Kills", FormatNumber(record.kills), new Vector2(132f, 0f), new Vector2(70f, 32f), 17f, new Color(1f, 0.58f, 0.22f, 1f));
-        CreateText(row.transform, "PlayTime", FormatPlayTime(record.playTimeSeconds), new Vector2(230f, 0f), new Vector2(70f, 32f), 15f, new Color(0.62f, 0.83f, 0.48f, 1f));
+        CreateText(row.transform, "PlayTime", FormatPlayTime(record.playTimeSeconds), new Vector2(190f, 0f), new Vector2(58f, 32f), 15f, new Color(0.62f, 0.83f, 0.48f, 1f));
+        CreateRewardIcons(row.transform, record.rewardIcons);
+    }
+
+    private void CreateRewardIcons(Transform parent, string rewardIcons)
+    {
+        if (string.IsNullOrEmpty(rewardIcons)) return;
+
+        string[] keys = rewardIcons.Split(',');
+        int visibleCount = Mathf.Min(keys.Length, 4);
+        for (int i = 0; i < visibleCount; i++)
+        {
+            string key = keys[i].Trim();
+            if (string.IsNullOrEmpty(key)) continue;
+
+            Sprite sprite = Resources.Load<Sprite>("RewardIcons/" + key);
+            if (sprite == null)
+            {
+                Texture2D texture = Resources.Load<Texture2D>("RewardIcons/" + key);
+                if (texture != null)
+                {
+                    sprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+                }
+            }
+            if (sprite == null) continue;
+
+            GameObject icon = CreateUIObject("RewardIcon_" + key, parent);
+            RectTransform rect = icon.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(24f, 24f);
+            rect.anchoredPosition = new Vector2(222f + i * 22f, 0f);
+
+            Image image = icon.AddComponent<Image>();
+            image.sprite = sprite;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+        }
     }
 
     private void CreateDivider(Transform parent, Vector2 position, Vector2 size, float alpha)

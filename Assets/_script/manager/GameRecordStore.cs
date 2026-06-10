@@ -9,6 +9,7 @@ public class GameRecord
     public int kills;
     public string date;
     public float playTimeSeconds;
+    public string rewardIcons;
 }
 
 [Serializable]
@@ -39,7 +40,7 @@ public static class GameRecordStore
         return collection.records;
     }
 
-    public static void AddRecord(int distance, int kills, float playTimeSeconds)
+    public static void AddRecord(int distance, int kills, float playTimeSeconds, string rewardIcons = "")
     {
         List<GameRecord> records = LoadRecords();
         records.Add(new GameRecord
@@ -47,7 +48,8 @@ public static class GameRecordStore
             distance = Mathf.Max(0, distance),
             kills = Mathf.Max(0, kills),
             date = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
-            playTimeSeconds = Mathf.Max(0f, playTimeSeconds)
+            playTimeSeconds = Mathf.Max(0f, playTimeSeconds),
+            rewardIcons = rewardIcons ?? ""
         });
 
         SaveRecords(records);

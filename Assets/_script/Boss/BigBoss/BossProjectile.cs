@@ -4,7 +4,7 @@ public class BossProjectile : MonoBehaviour
 {
     [Header("子彈設定")]
     public float speed = 15f;
-    public float damagePercent = 0.2f; // 打中玩家扣最大生命比例
+    public int damage = 35;
     public float lifeTime = 4f;   // 飛出畫面後幾秒銷毀，避免浪費效能
     private bool hasHit;
     private const float HitRadius = 0.75f;
@@ -45,8 +45,7 @@ public class BossProjectile : MonoBehaviour
         if (player == null) return false;
 
         hasHit = true;
-        int damage = Mathf.Max(1, Mathf.CeilToInt(player.maxHp * damagePercent));
-        player.TakeDamage(damage); // 玩家扣血
+        player.TakeDamage(Mathf.Max(1, damage)); // 玩家扣血
         Destroy(gameObject);       // 子彈銷毀
         return true;
     }
