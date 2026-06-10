@@ -35,6 +35,13 @@ public class BigBossAI : MonoBehaviour
         healthScript = GetComponent<BossHealth>();
     }
 
+    public void ApplyEncounterScaling(int totalBossSpawnCount)
+    {
+        int bigBossEncounterIndex = Mathf.Max(1, Mathf.CeilToInt(totalBossSpawnCount / 4f));
+        float damageMultiplier = 1f + Mathf.Max(0, bigBossEncounterIndex - 1) * 0.32f;
+        phaseOneProjectileDamage = Mathf.Max(1, Mathf.RoundToInt(phaseOneProjectileDamage * Mathf.Min(3f, damageMultiplier)));
+    }
+
     void Update()
     {
         // Boss 死了就不動
@@ -180,6 +187,7 @@ public class BigBossAI : MonoBehaviour
     private void SpawnPhaseOneFireball(Vector3 spawnPos, Vector3 direction)
     {
         if (direction.sqrMagnitude < 0.01f) direction = Vector3.back;
+        SfxManager.Play("boss_fireball", 0.62f, 0.12f);
 
         GameObject fireball = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         fireball.name = "BigBossPhaseOneFireball";

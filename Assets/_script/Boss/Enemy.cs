@@ -50,7 +50,9 @@ public class Enemy : MonoBehaviour
         {
             float scalingDistance = Mathf.Max(0, transform.position.z - 30f);
             float stage = Mathf.Floor(scalingDistance / 80f);
-            maxHp = Mathf.Round(maxHp * (1.45f + stage * 0.28f));
+            float lateStage = Mathf.Max(0f, stage - 8f);
+            float hpMultiplier = 1.45f + stage * 0.28f + lateStage * lateStage * 0.025f;
+            maxHp = Mathf.Round(maxHp * hpMultiplier);
         }
 
         currentHp = maxHp;
@@ -133,19 +135,27 @@ public class Enemy : MonoBehaviour
 
         if (currentHp <= 0)
         {
-            isDead = true;
-            PlayerStats player = FindAnyObjectByType<PlayerStats>();
-            if (player != null) player.AddKill();
-
-            if (chestPrefab != null)
-            {
-                Vector3 dropPos = new Vector3(transform.position.x - 0.75f, -0.45f, transform.position.z);
-                Instantiate(chestPrefab, dropPos, Quaternion.Euler(0, 180f, 0));
-            }
-            Destroy(gameObject);
+            Die(true, true);
         }
 
         return true;
+    }
+
+    private void Die(bool countKill, bool dropChest)
+    {
+        if (isDead) return;
+
+        isDead = true;
+        PlayerStats player = FindAnyObjectByType<PlayerStats>();
+        if (countKill && player != null) player.AddKill();
+
+        if (dropChest && chestPrefab != null)
+        {
+            Vector3 dropPos = new Vector3(transform.position.x - 0.75f, -0.45f, transform.position.z);
+            Instantiate(chestPrefab, dropPos, Quaternion.Euler(0, 180f, 0));
+        }
+
+        Destroy(gameObject);
     }
 
     void UpdateHPUI()
@@ -158,12 +168,12 @@ public class Enemy : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         if (isDead) return;
-        PlayerStats player = other.GetComponent<PlayerStats>();
+        PlayerStats player = other.GetComponentInParent<PlayerStats>();
         if (player != null)
         {
-            isDead = true;
             player.TakeDamage(Mathf.RoundToInt(currentHp));
-            Destroy(gameObject);
+            bool playerSurvived = player.currentHp > 0;
+            Die(playerSurvived, playerSurvived);
         }
     }
 

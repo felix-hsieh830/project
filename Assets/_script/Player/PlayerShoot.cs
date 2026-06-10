@@ -21,6 +21,7 @@ public class PlayerShoot : MonoBehaviour
 
     // 箭矢基礎速度，要跟 ArrowFly 裡的 speed 一致
     private float arrowBaseSpeed = 15f;
+    private const float inheritedForwardSpeedScale = 0.35f;
 
     void Start()
     {
@@ -77,10 +78,11 @@ public class PlayerShoot : MonoBehaviour
         }
 
         int actualArrowCount = Mathf.Max(1, stats.arrowCount);
-        float flightSpeedMultiplier = 1f + (effectiveAttackSpeed * 0.1f);
+        float flightSpeedMultiplier = 1f;
+        float inheritedArrowSpeed = currentPlayerZSpeed * inheritedForwardSpeedScale;
 
         float actualRange = Mathf.Min(stats.attackRange, 90f);
-        float estimatedTotalSpeed = arrowBaseSpeed * flightSpeedMultiplier + currentPlayerZSpeed;
+        float estimatedTotalSpeed = arrowBaseSpeed * flightSpeedMultiplier + inheritedArrowSpeed;
         float flightTime = actualRange / Mathf.Max(estimatedTotalSpeed, 0.1f);
 
         float anglePerStep = 1.5f;   // 每根箭的生成角度間隔
@@ -96,7 +98,7 @@ public class PlayerShoot : MonoBehaviour
             float yawRate = (distFromCenter / Mathf.Max(center, 1f)) * yawPerStep / Mathf.Max(flightTime, 0.1f);
 
             Quaternion arrowRotation = transform.rotation * Quaternion.Euler(0, spawnAngle, 0);
-            Vector3 spawnPosition = transform.position + new Vector3(0, 1.2f, 1.5f);
+            Vector3 spawnPosition = transform.position + new Vector3(distFromCenter * 0.18f, 1.2f, 1.5f - Mathf.Abs(distFromCenter) * 0.08f);
             GameObject arrow = Instantiate(arrowPrefab, spawnPosition, arrowRotation);
 
             ArrowFly arrowScript = arrow.GetComponent<ArrowFly>();
@@ -104,9 +106,11 @@ public class PlayerShoot : MonoBehaviour
             {
                 float finalBaseDamage = stats.baseDamage;
                 arrowScript.ApplyVisualColor(stats.GetArrowColor(), stats.arrowWoodColor, stats.GetArrowEmissionColor(), stats.arrowWoodEmissionColor, true);
-                arrowScript.Setup(finalBaseDamage, stats.attackRange, stats.critRate, stats.critDamage, currentPlayerZSpeed, flightSpeedMultiplier, yawRate, stats);
+                arrowScript.Setup(finalBaseDamage, stats.attackRange, stats.critRate, stats.critDamage, inheritedArrowSpeed, flightSpeedMultiplier, yawRate, stats);
             }
         }
+
+        SfxManager.Play("arrow_shoot", 0.42f, 0.045f);
 
         // 🌟 通知動畫控制器播放射擊動畫
         if (animController != null)

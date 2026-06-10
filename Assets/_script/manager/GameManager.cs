@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 
 public class GameManager : MonoBehaviour
@@ -17,6 +18,9 @@ public class GameManager : MonoBehaviour
     private bool rewardUIStyled = false;
     private bool isGameOver = false;
     private float runStartRealtime;
+    private Button rewardRefreshButton;
+    private TextMeshProUGUI rewardRefreshLabel;
+    private int rewardRefreshesRemaining = 0;
 
     [Header("Boss 獎勵 UI")]
     public GameObject rewardPanel;
@@ -38,6 +42,11 @@ public class GameManager : MonoBehaviour
     public float bossSpawnDistance = 55f;
     public float bigBossExtraSpawnDistance = 18f;
     public GameObject smallBossClawProjectilePrefab;
+    public float normalEnemyBaseHp = 30f;
+    public int babyBossPhaseCount = 4;
+    public float babyBossHpMultiplier = 2f;
+    public float smallBossHpMultiplier = 4f;
+    public float bigBossHpMultiplier = 10f;
 
     private bool isBigBossReward = false;
     private PlayerStats playerStats;
@@ -80,7 +89,9 @@ public class GameManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (!gameOverPanel.activeSelf && !rewardPanel.activeSelf)
+            bool gameOverVisible = gameOverPanel != null && gameOverPanel.activeSelf;
+            bool rewardVisible = rewardPanel != null && rewardPanel.activeSelf;
+            if (!gameOverVisible && !rewardVisible)
             {
                 if (isPaused) ResumeGameFromPause();
                 else PauseGame();
@@ -113,7 +124,7 @@ public class GameManager : MonoBehaviour
 
         isPaused = true;
         Time.timeScale = 0f;
-        pauseMenuUI.Show(settingsButtonRect.position); // 🌟 從按鈕位置展開
+        if (pauseMenuUI != null && settingsButtonRect != null) pauseMenuUI.Show(settingsButtonRect.position); // 🌟 從按鈕位置展開
         if (settingsButtonImage != null) settingsButtonImage.sprite = spritePaused;
     }
 
@@ -124,7 +135,7 @@ public class GameManager : MonoBehaviour
 
         isPaused = false;
         Time.timeScale = 1f;
-        pauseMenuUI.Hide(settingsButtonRect.position); // 🌟 縮回按鈕位置
+        if (pauseMenuUI != null && settingsButtonRect != null) pauseMenuUI.Hide(settingsButtonRect.position); // 🌟 縮回按鈕位置
         if (settingsButtonImage != null) settingsButtonImage.sprite = spriteNormal;
     }
 
@@ -135,7 +146,25 @@ public class GameManager : MonoBehaviour
         if (isPaused) ResumeGameFromPause();
         else PauseGame();
     }
-    public void ReturnToMainMenu() { Time.timeScale = 1f; SceneManager.LoadScene(0); }
+    public void ReturnToMainMenu()
+    {
+        CancelInvoke();
+        StopAllCoroutines();
+
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+        }
+
+        if (pauseMenuUI != null) pauseMenuUI.HideImmediate();
+        if (pausePanel != null) pausePanel.SetActive(false);
+        if (rewardPanel != null) rewardPanel.SetActive(false);
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+
+        isPaused = false;
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(0);
+    }
     public void QuitGame() { Application.Quit(); }
 
     public void ShowGameOver(int distance, int kills)
@@ -145,6 +174,7 @@ public class GameManager : MonoBehaviour
         SetupGameOverUI();
         isGameOver = true;
         isPaused = false;
+        SfxManager.Play("game_over", 0.85f, 0.2f);
         if (pauseMenuUI != null) pauseMenuUI.HideImmediate();
         if (settingsButtonImage != null) settingsButtonImage.sprite = spriteNormal;
 
@@ -493,7 +523,22 @@ public class GameManager : MonoBehaviour
             label.alignment = TextAlignmentOptions.Center;
             label.color = new Color(0.22f, 0.12f, 0.03f, 1f);
             ApplyTMPOutline(label, new Color(1f, 0.94f, 0.72f, 0.9f), 0.08f, 0.2f);
+            rewardRefreshButton = button;
+            rewardRefreshLabel = label;
             return;
+        }
+    }
+
+    private void UpdateRewardRefreshButtonState()
+    {
+        if (rewardRefreshButton == null) return;
+
+        bool canRefresh = !isBigBossReward && rewardRefreshesRemaining > 0;
+        rewardRefreshButton.gameObject.SetActive(canRefresh);
+
+        if (rewardRefreshLabel != null && canRefresh)
+        {
+            rewardRefreshLabel.text = "刷新 " + rewardRefreshesRemaining;
         }
     }
 
@@ -627,16 +672,23 @@ public class GameManager : MonoBehaviour
     public void ShowReward(bool isBigBoss)
     {
         isBigBossReward = isBigBoss;
+        rewardRefreshesRemaining = isBigBoss ? 0 : 1;
         SetupRewardUI();
         rewardPanel.SetActive(true);
         Time.timeScale = 0f;
+        UpdateRewardRefreshButtonState();
         GenerateRewards();
     }
 
     public void RefreshRewards()
     {
         if (isBigBossReward) return;
+        if (rewardRefreshesRemaining <= 0) return;
+
+        rewardRefreshesRemaining--;
+        SfxManager.Play("ui_click", 0.72f, 0.03f);
         GenerateRewards();
+        UpdateRewardRefreshButtonState();
     }
 
     private void GenerateRewards()
@@ -705,12 +757,12 @@ public class GameManager : MonoBehaviour
 
         switch (type)
         {
-            case RewardType.Light: btnText.text = "\n<color=#8EF18E>射速 +35%</color>\n<color=#FF5E57>傷害 -25%</color>"; break;
-            case RewardType.Heavy: btnText.text = "\n<color=#8EF18E>攻擊力 +9</color>\n<color=#FF5E57>攻速 -18%</color>"; break;
-            case RewardType.Multi: btnText.text = "\n<color=#8EF18E>箭矢數量 +1</color>\n<color=#FF5E57>傷害 -28%</color>"; break;
-            case RewardType.BigAtk: btnText.text = "\n<color=#FFE66B>攻擊力 x1.5</color>\n王牌爆發"; break;
-            case RewardType.BigSpd: btnText.text = "\n<color=#FFE66B>攻擊速度 x1.4</color>\n狂暴連射"; break;
-            case RewardType.BigHp: btnText.text = "\n<color=#FFE66B>生命 +50%</color>\n存活強化"; break;
+            case RewardType.Light: btnText.text = "\n<color=#8EF18E>射速 +0.6</color>\n<color=#FF5E57>攻擊力 -2</color>"; break;
+            case RewardType.Heavy: btnText.text = "\n<color=#8EF18E>攻擊力 +6</color>\n<color=#FF5E57>攻速 -0.2</color>"; break;
+            case RewardType.Multi: btnText.text = "\n<color=#8EF18E>箭矢數量 +2</color>\n<color=#FF5E57>傷害 -40%</color>"; break;
+            case RewardType.BigAtk: btnText.text = "\n<color=#FFE66B>攻擊力 x2</color>\n王牌爆發"; break;
+            case RewardType.BigSpd: btnText.text = "\n<color=#FFE66B>攻擊速度 x2</color>\n狂暴連射"; break;
+            case RewardType.BigHp: btnText.text = "\n<color=#FFE66B>生命 x2</color>\n存活強化"; break;
             case RewardType.Lifesteal: btnText.text = $"\n<color=#8EF18E>吸血 Lv{playerStats.lifestealLevel + 1}</color>\n傷害 {(playerStats.lifestealLevel + 1) * 5}% 回血"; break;
             case RewardType.Resist: btnText.text = $"\n<color=#8EF18E>抗撞 Lv{playerStats.collisionResistLevel + 1}</color>\n撞擊減傷 {(playerStats.collisionResistLevel + 1) * 10}%"; break;
             case RewardType.EnemyPlusOne: btnText.text = "\n<color=#8EF18E>下一段怪物 +1</color>\n通過 Boss 後結束"; break;
@@ -804,31 +856,28 @@ public class GameManager : MonoBehaviour
     private void ApplyReward(RewardType type)
     {
         if (playerStats == null) return;
-        if (collectedRewardIcons.Count < 12)
-        {
-            collectedRewardIcons.Add(GetRewardIconKey(type));
-        }
+        collectedRewardIcons.Add(GetRewardIconKey(type));
 
         switch (type)
         {
             case RewardType.Light:
-                playerStats.attackSpeed *= 1.35f;
-                playerStats.baseDamage *= 0.75f;
+                playerStats.attackSpeed += 0.6f;
+                playerStats.baseDamage = Mathf.Max(1f, playerStats.baseDamage - 2f);
                 playerStats.RegisterArrowStyle(PlayerStats.ArrowStyle.Speed);
                 break;
             case RewardType.Heavy:
-                playerStats.baseDamage += 9f;
-                playerStats.attackSpeed *= 0.82f;
+                playerStats.baseDamage += 6f;
+                playerStats.attackSpeed = Mathf.Max(0.2f, playerStats.attackSpeed - 0.2f);
                 playerStats.RegisterArrowStyle(PlayerStats.ArrowStyle.Attack);
                 break;
             case RewardType.Multi:
-                playerStats.arrowCount += 1;
-                playerStats.baseDamage *= 0.72f;
+                playerStats.arrowCount += 2;
+                playerStats.baseDamage *= 0.6f;
                 playerStats.RegisterArrowStyle(PlayerStats.ArrowStyle.Multi);
                 break;
-            case RewardType.BigAtk: playerStats.baseDamage *= 1.5f; break;
-            case RewardType.BigSpd: playerStats.attackSpeed *= 1.4f; break;
-            case RewardType.BigHp: playerStats.AddMaxHealth(Mathf.RoundToInt(playerStats.maxHp * 0.5f)); break;
+            case RewardType.BigAtk: playerStats.baseDamage *= 2f; break;
+            case RewardType.BigSpd: playerStats.attackSpeed *= 2f; break;
+            case RewardType.BigHp: playerStats.AddMaxHealth(playerStats.maxHp); break;
             case RewardType.Lifesteal: playerStats.lifestealLevel++; break;
             case RewardType.Resist: playerStats.collisionResistLevel++; break;
             case RewardType.EnemyPlusOne:
@@ -874,16 +923,15 @@ public class GameManager : MonoBehaviour
     private void SpawnBoss(bool isBigBoss, float targetZ)
     {
         Vector3 spawnPos = new Vector3(0, 1.5f, targetZ);
-        float baseEnemyMaxHp = 75f;
-        float scalingDistance = Mathf.Max(0, spawnPos.z - 30f);
-        float stage = Mathf.Floor(scalingDistance / 40f);
-        float currentEnemyHp = Mathf.Round(baseEnemyMaxHp * Mathf.Pow(1.13f, stage));
+        float currentEnemyHp = CalculateNormalEnemyHp(spawnPos.z);
         GameObject spawnedBoss = null;
 
         if (isBigBoss)
         {
             spawnedBoss = Instantiate(bigBossPrefab, spawnPos, Quaternion.identity);
-            if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * 4f);
+            if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * GetBossHpMultiplier(true));
+            BigBossAI bigBossAI = spawnedBoss.GetComponent<BigBossAI>();
+            if (bigBossAI != null) bigBossAI.ApplyEncounterScaling(bossSpawnCount);
         }
         else
         {
@@ -891,7 +939,7 @@ public class GameManager : MonoBehaviour
             {
                 int randomIndex = Random.Range(0, smallBossPrefabs.Length);
                 spawnedBoss = Instantiate(smallBossPrefabs[randomIndex], spawnPos, Quaternion.identity);
-                if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * 1.55f);
+                if (spawnedBoss.GetComponent<BossHealth>() != null) spawnedBoss.GetComponent<BossHealth>().SetupHealth(currentEnemyHp * GetBossHpMultiplier(false));
                 SetupSmallBossAttack(spawnedBoss);
             }
         }
@@ -900,7 +948,32 @@ public class GameManager : MonoBehaviour
         {
             enemyPlusOneTrackedBossZ = spawnedBoss.transform.position.z;
         }
+
+        if (spawnedBoss != null)
+        {
+            SfxManager.Play("boss_spawn", isBigBoss ? 0.75f : 0.48f, 0.5f);
+        }
     }
+
+    private float GetBossHpMultiplier(bool isBigBoss)
+    {
+        if (bossSpawnCount <= babyBossPhaseCount)
+        {
+            return babyBossHpMultiplier;
+        }
+
+        return isBigBoss ? bigBossHpMultiplier : smallBossHpMultiplier;
+    }
+
+    private float CalculateNormalEnemyHp(float worldZ)
+    {
+        float scalingDistance = Mathf.Max(0, worldZ - 30f);
+        float stage = Mathf.Floor(scalingDistance / 80f);
+        float lateStage = Mathf.Max(0f, stage - 8f);
+        float hpMultiplier = 1.45f + stage * 0.28f + lateStage * lateStage * 0.025f;
+        return Mathf.Round(normalEnemyBaseHp * hpMultiplier);
+    }
+
     public void SpawnBossRewardChest(Vector3 position, bool isBigBoss)
     {
         if (bossRewardChestPrefab == null) return;

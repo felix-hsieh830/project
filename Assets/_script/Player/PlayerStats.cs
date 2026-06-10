@@ -78,6 +78,7 @@ public class PlayerStats : MonoBehaviour
         if (actualHeal > 0 || showFloatingTextWhenFull)
         {
             FloatingTextSpawner.instance?.Spawn("+" + actualHeal.ToString(), transform.position, Color.green, Vector3.right, transform, 1.15f);
+            if (actualHeal > 0) SfxManager.Play("pickup", 0.35f, 0.08f);
         }
     }
 
@@ -88,6 +89,7 @@ public class PlayerStats : MonoBehaviour
 
         FloatingTextSpawner.instance?.Spawn("-" + finalDamage.ToString(), transform.position, Color.red, Vector3.right, transform, 1.25f);
         currentHp -= finalDamage;
+        SfxManager.Play("player_hit", 0.65f, 0.12f);
         UpdateHPUI();
 
         if (currentHp <= 0)

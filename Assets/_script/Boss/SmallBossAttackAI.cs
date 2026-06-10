@@ -127,11 +127,15 @@ public class SmallBossAttackAI : MonoBehaviour
         fireballBurstSpacing /= speedMultiplier;
         clawSpeed *= Mathf.Lerp(0.78f, 1.02f, Mathf.InverseLerp(1f, 6f, encounterIndex));
         fireballSpeed *= Mathf.Lerp(0.78f, 1.02f, Mathf.InverseLerp(1f, 6f, encounterIndex));
-        damage = Mathf.Max(1, Mathf.RoundToInt(damage * Mathf.Lerp(0.75f, 1f, Mathf.InverseLerp(1f, 5f, encounterIndex))));
+        float earlyDamageMultiplier = Mathf.Lerp(0.75f, 1f, Mathf.InverseLerp(1f, 4f, encounterIndex));
+        float lateDamageMultiplier = 1f + Mathf.Max(0, encounterIndex - 4) * 0.18f;
+        damage = Mathf.Max(1, Mathf.RoundToInt(damage * earlyDamageMultiplier * Mathf.Min(3f, lateDamageMultiplier)));
     }
 
     private void ShootClawTriple()
     {
+        SfxManager.Play("boss_attack", 0.58f, 0.16f);
+
         Vector3 spawnPos = transform.position + new Vector3(0f, spawnHeight, -1.2f);
         Vector3 targetDir = GetFlatDirectionToPlayer(spawnPos);
 
@@ -172,6 +176,8 @@ public class SmallBossAttackAI : MonoBehaviour
 
     private void ShootFireball()
     {
+        SfxManager.Play("boss_fireball", 0.5f, 0.12f);
+
         Vector3 spawnPos = transform.position + new Vector3(0f, fireballSpawnHeight, -1.25f);
         Vector3 dir = GetFlatDirectionToPlayer(spawnPos);
 
@@ -185,6 +191,8 @@ public class SmallBossAttackAI : MonoBehaviour
 
     private void SpawnThornLanes()
     {
+        SfxManager.Play("boss_attack", 0.5f, 0.28f);
+
         int safeLane = Random.Range(0, Lanes.Length);
         float baseZ = transform.position.z - thornBossForwardOffset;
 

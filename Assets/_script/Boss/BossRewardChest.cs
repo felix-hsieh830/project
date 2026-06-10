@@ -12,6 +12,7 @@ public class BossRewardChest : MonoBehaviour
         if (stats != null)
         {
             hasTriggered = true;
+            SfxManager.Play("reward", 0.85f, 0.08f);
             GameManager gm = FindAnyObjectByType<GameManager>();
             if (gm != null) gm.ShowReward(isBigBoss);
             Destroy(gameObject);

@@ -233,9 +233,9 @@ public class MainMenuManager : MonoBehaviour
         CreateText(parent, "ColumnRank", "排名", new Vector2(-226f, 217f), new Vector2(52f, 28f), 17f, gold);
         CreateText(parent, "ColumnScore", "距離", new Vector2(-142f, 217f), new Vector2(82f, 28f), 17f, gold);
         CreateText(parent, "ColumnDate", "日期", new Vector2(-12f, 217f), new Vector2(112f, 28f), 17f, gold);
-        CreateText(parent, "ColumnKills", "擊殺", new Vector2(132f, 217f), new Vector2(70f, 28f), 17f, gold);
-        CreateText(parent, "ColumnTime", "時間", new Vector2(190f, 217f), new Vector2(60f, 28f), 17f, gold);
-        CreateText(parent, "ColumnRewards", "獎勵", new Vector2(252f, 217f), new Vector2(70f, 28f), 17f, gold);
+        CreateText(parent, "ColumnKills", "擊殺", new Vector2(92f, 217f), new Vector2(50f, 28f), 17f, gold);
+        CreateText(parent, "ColumnTime", "時間", new Vector2(140f, 217f), new Vector2(52f, 28f), 17f, gold);
+        CreateText(parent, "ColumnRewards", "獎勵", new Vector2(214f, 217f), new Vector2(78f, 28f), 17f, gold);
     }
 
     private void CreateRecordsScroll(Transform parent)
@@ -255,10 +255,10 @@ public class MainMenuManager : MonoBehaviour
         recordsContent = content.transform;
         RectTransform contentRect = content.GetComponent<RectTransform>();
         contentRect.anchorMin = new Vector2(0f, 1f);
-        contentRect.anchorMax = new Vector2(1f, 1f);
-        contentRect.pivot = new Vector2(0.5f, 1f);
-        contentRect.anchoredPosition = Vector2.zero;
-        contentRect.sizeDelta = new Vector2(0f, 0f);
+        contentRect.anchorMax = new Vector2(0f, 1f);
+        contentRect.pivot = new Vector2(0f, 1f);
+        contentRect.anchoredPosition = new Vector2(-77.5f, 0f);
+        contentRect.sizeDelta = new Vector2(660f, 0f);
 
         VerticalLayoutGroup layout = content.AddComponent<VerticalLayoutGroup>();
         layout.childAlignment = TextAnchor.UpperCenter;
@@ -275,7 +275,7 @@ public class MainMenuManager : MonoBehaviour
         ScrollRect scroll = viewport.AddComponent<ScrollRect>();
         scroll.content = contentRect;
         scroll.viewport = viewportRect;
-        scroll.horizontal = false;
+        scroll.horizontal = true;
         scroll.vertical = true;
         scroll.movementType = ScrollRect.MovementType.Clamped;
         scroll.scrollSensitivity = 32f;
@@ -342,7 +342,8 @@ public class MainMenuManager : MonoBehaviour
     {
         GameObject row = CreateUIObject("RecordRow_" + rank, recordsContent);
         LayoutElement layout = row.AddComponent<LayoutElement>();
-        layout.preferredHeight = 38f;
+        layout.preferredHeight = 48f;
+        layout.preferredWidth = 660f;
 
         Image bg = row.AddComponent<Image>();
         bg.color = RowColor(rank);
@@ -355,8 +356,8 @@ public class MainMenuManager : MonoBehaviour
         CreateText(row.transform, "Rank", rank.ToString(), new Vector2(-226f, 0f), new Vector2(52f, 32f), 19f, RankColor(rank));
         CreateText(row.transform, "Distance", FormatNumber(record.distance) + "m", new Vector2(-142f, 0f), new Vector2(82f, 32f), 19f, new Color(1f, 0.90f, 0.55f, 1f)).fontStyle = FontStyles.Bold;
         CreateText(row.transform, "Date", ShortDate(record.date), new Vector2(-12f, 0f), new Vector2(112f, 32f), 15f, new Color(0.83f, 0.72f, 0.52f, 1f));
-        CreateText(row.transform, "Kills", FormatNumber(record.kills), new Vector2(132f, 0f), new Vector2(70f, 32f), 17f, new Color(1f, 0.58f, 0.22f, 1f));
-        CreateText(row.transform, "PlayTime", FormatPlayTime(record.playTimeSeconds), new Vector2(190f, 0f), new Vector2(58f, 32f), 15f, new Color(0.62f, 0.83f, 0.48f, 1f));
+        CreateText(row.transform, "Kills", FormatNumber(record.kills), new Vector2(92f, 0f), new Vector2(50f, 34f), 17f, new Color(1f, 0.58f, 0.22f, 1f));
+        CreateText(row.transform, "PlayTime", FormatPlayTime(record.playTimeSeconds), new Vector2(140f, 0f), new Vector2(52f, 34f), 15f, new Color(0.62f, 0.83f, 0.48f, 1f));
         CreateRewardIcons(row.transform, record.rewardIcons);
     }
 
@@ -365,12 +366,28 @@ public class MainMenuManager : MonoBehaviour
         if (string.IsNullOrEmpty(rewardIcons)) return;
 
         string[] keys = rewardIcons.Split(',');
-        int visibleCount = Mathf.Min(keys.Length, 4);
-        for (int i = 0; i < visibleCount; i++)
+        List<string> orderedKeys = new List<string>();
+        Dictionary<string, int> counts = new Dictionary<string, int>();
+        for (int i = 0; i < keys.Length; i++)
         {
             string key = keys[i].Trim();
             if (string.IsNullOrEmpty(key)) continue;
 
+            if (!counts.ContainsKey(key))
+            {
+                counts[key] = 0;
+                orderedKeys.Add(key);
+            }
+            counts[key]++;
+        }
+
+        const float iconSize = 34f;
+        const float iconSpacing = 38f;
+        const float startX = 214f;
+
+        for (int i = 0; i < orderedKeys.Count; i++)
+        {
+            string key = orderedKeys[i];
             Sprite sprite = Resources.Load<Sprite>("RewardIcons/" + key);
             if (sprite == null)
             {
@@ -387,13 +404,21 @@ public class MainMenuManager : MonoBehaviour
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(24f, 24f);
-            rect.anchoredPosition = new Vector2(222f + i * 22f, 0f);
+            rect.sizeDelta = new Vector2(iconSize, iconSize);
+            rect.anchoredPosition = new Vector2(startX + i * iconSpacing, 0f);
 
             Image image = icon.AddComponent<Image>();
             image.sprite = sprite;
             image.preserveAspect = true;
             image.raycastTarget = false;
+
+            if (counts[key] > 1)
+            {
+                TextMeshProUGUI countText = CreateText(icon.transform, "Count", "x" + counts[key], new Vector2(8f, -8f), new Vector2(30f, 14f), 11f, new Color(1f, 0.92f, 0.62f, 1f));
+                countText.alignment = TextAlignmentOptions.BottomRight;
+                countText.fontStyle = FontStyles.Bold;
+                ApplyTextStyle(countText, 0.16f);
+            }
         }
     }
 
@@ -502,7 +527,11 @@ public class MainMenuManager : MonoBehaviour
         colors.disabledColor = new Color(0.34f, 0.28f, 0.22f, 0.7f);
         colors.fadeDuration = 0.08f;
         button.colors = colors;
-        button.onClick.AddListener(action);
+        button.onClick.AddListener(() =>
+        {
+            SfxManager.Play("ui_click", 0.72f, 0.03f);
+            action?.Invoke();
+        });
 
         Outline outline = buttonObject.AddComponent<Outline>();
         outline.effectColor = new Color(0f, 0f, 0f, 0.65f);

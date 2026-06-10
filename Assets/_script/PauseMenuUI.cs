@@ -352,6 +352,8 @@ public class PauseMenuUI : MonoBehaviour
 
     void OnButtonClick(int index)
     {
+        SfxManager.Play("ui_click", 0.72f, 0.03f);
+
         switch (index)
         {
             case 0: gameManager?.ResumeGameFromPause(); break;
@@ -375,9 +377,13 @@ public class PauseMenuUI : MonoBehaviour
 
         string labelColor = ColorUtility.ToHtmlStringRGB(statsLabelColor);
         string valueColor = ColorUtility.ToHtmlStringRGB(statsValueColor);
+        PlayerMove move = stats.GetComponent<PlayerMove>();
+        string healthValue = stats.currentHp >= stats.maxHp ? FormatNumber(stats.currentHp) : FormatNumber(stats.currentHp) + " / " + FormatNumber(stats.maxHp);
+        string runSpeedValue = move != null ? move.CurrentForwardSpeed.ToString("0.##") + " m/s" : "--";
 
         statsBodyText.text =
-            StatLine("生命值", FormatNumber(stats.currentHp) + " / " + FormatNumber(stats.maxHp), labelColor, valueColor) +
+            StatLine("生命值", healthValue, labelColor, valueColor) +
+            StatLine("跑速", runSpeedValue, labelColor, valueColor) +
             StatLine("攻擊力", FormatNumber(stats.baseDamage), labelColor, valueColor) +
             StatLine("攻速", stats.attackSpeed.ToString("0.##") + " /s", labelColor, valueColor) +
             StatLine("攻距", stats.attackRange.ToString("0.#") + " m", labelColor, valueColor) +

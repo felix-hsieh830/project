@@ -714,11 +714,11 @@ Transform:
   m_GameObject: {fileID: 203844586}
   serializedVersion: 2
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0.171, y: 2.99, z: -0.297}
+  m_LocalPosition: {x: 0.171, y: 3.39, z: -0.297}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 224987689}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
 --- !u!1 &224987685
 GameObject:
@@ -839,6 +839,7 @@ Transform:
   - {fileID: 1766297214}
   - {fileID: 567101798}
   - {fileID: 1626939866}
+  - {fileID: 203844589}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &224987690
@@ -917,8 +918,8 @@ MonoBehaviour:
   maxHp: 100
   currentHp: 100
   baseDamage: 15
-  attackSpeed: 1
-  attackRange: 15
+  attackSpeed: 1.5
+  attackRange: 10
   arrowCount: 1
   arrowWoodColor: {r: 0.55, g: 0.32, b: 0.13, a: 1}
   arrowWoodEmissionColor: {r: 0.08, g: 0.04, b: 0.01, a: 1}
@@ -926,7 +927,7 @@ MonoBehaviour:
   arrowSpeedColor: {r: 1, g: 0.86, b: 0.12, a: 1}
   arrowMultiColor: {r: 0.16, g: 0.46, b: 1, a: 1}
   critRate: 0.1
-  critDamage: 2
+  critDamage: 1.5
   lifestealLevel: 0
   collisionResistLevel: 0
   extraEnemies: 0
@@ -6109,6 +6110,11 @@ MonoBehaviour:
   bossSpawnDistance: 145
   bigBossExtraSpawnDistance: 18
   smallBossClawProjectilePrefab: {fileID: 6920924163189991652, guid: 37a9d13a2b5ba234ab1a0a48918f710c, type: 3}
+  normalEnemyBaseHp: 30
+  babyBossPhaseCount: 4
+  babyBossHpMultiplier: 2
+  smallBossHpMultiplier: 4
+  bigBossHpMultiplier: 10
   bossRewardChestPrefab: {fileID: 8872295833530894158, guid: a282ef3c1a61b3f4c8e20946bc3cdc61, type: 3}
   settingsButtonImage: {fileID: 1225787027}
   spriteNormal: {fileID: 21300000, guid: a3100c9bca878a141a6816f352eebfb9, type: 3}
@@ -6873,7 +6879,6 @@ CanvasRenderer:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 203844589}
   - {fileID: 224987689}
   - {fileID: 1280347408}
   - {fileID: 1216320047}

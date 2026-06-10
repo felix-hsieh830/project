@@ -206,11 +206,13 @@ public class ArrowFly : MonoBehaviour
         {
             lifestealDamage = Mathf.Min(finalDamage, Mathf.Max(0f, target.CurrentHp));
             dealtDamage = target.TakeDamage(finalDamage);
+            if (dealtDamage) SfxManager.Play("arrow_hit", 0.52f, 0.035f);
         }
         else if (boss != null)
         {
             lifestealDamage = Mathf.Min(finalDamage, Mathf.Max(0f, boss.currentHp));
             dealtDamage = boss.TakeDamage(finalDamage);
+            if (dealtDamage) SfxManager.Play("boss_hit", 0.58f, 0.045f);
         }
 
         if (!dealtDamage)

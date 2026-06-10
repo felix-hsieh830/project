@@ -9,6 +9,7 @@ public class BossHealth : MonoBehaviour
     public float currentHp;
     public bool isBigBoss = false;
     public float bigBossEngageDistance = 32f;
+    public float bigBossAttackRangePadding = 2.5f;
 
     [Header("UI 顯示")]
     public TextMeshPro hpText;
@@ -38,9 +39,12 @@ public class BossHealth : MonoBehaviour
             PlayerMove playerMove = FindAnyObjectByType<PlayerMove>();
             if (playerMove != null && !playerMove.isFightingBigBoss)
             {
-                float distanceToPlayer = transform.position.z - playerMove.transform.position.z;
+                float distanceToPlayer = GetForwardDistanceToPlayer(playerMove.transform.position);
+                PlayerStats playerStats = playerMove.GetComponent<PlayerStats>();
+                float playerAttackRange = playerStats != null ? playerStats.attackRange : 0f;
+                bool canReachBoss = distanceToPlayer <= playerAttackRange + bigBossAttackRangePadding;
 
-                if (distanceToPlayer <= bigBossEngageDistance && distanceToPlayer > 0)
+                if (distanceToPlayer <= bigBossEngageDistance && distanceToPlayer > 0 && canReachBoss)
                 {
                     playerMove.isFightingBigBoss = true; // 強制玩家停車
 
@@ -119,6 +123,13 @@ public class BossHealth : MonoBehaviour
 
             if (player.currentHp > 0)
             {
+                GameManager gm = FindAnyObjectByType<GameManager>();
+                if (gm != null)
+                {
+                    gm.EndEnemyPlusOneStage();
+                    gm.SpawnBossRewardChest(transform.position, isBigBoss);
+                }
+
                 if (isBigBoss)
                 {
                     PlayerMove playerMove = player.GetComponent<PlayerMove>();
@@ -127,12 +138,35 @@ public class BossHealth : MonoBehaviour
                     // 🌟 撞死 Boss 也要把鏡頭拉回空中
                     if (Camera.main != null) Camera.main.GetComponent<CameraFollow>()?.SwitchToNormalCamera();
                 }
-
-                // GameManager gm = FindAnyObjectByType<GameManager>();
-                // if (gm != null) gm.ShowReward(isBigBoss);
             }
             Destroy(gameObject);
         }
+    }
+
+    private float GetForwardDistanceToPlayer(Vector3 playerPosition)
+    {
+        Collider[] colliders = GetComponentsInChildren<Collider>(true);
+        bool hasBounds = false;
+        Bounds combinedBounds = new Bounds(transform.position, Vector3.zero);
+
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider targetCollider = colliders[i];
+            if (targetCollider == null || !targetCollider.enabled) continue;
+
+            if (!hasBounds)
+            {
+                combinedBounds = targetCollider.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                combinedBounds.Encapsulate(targetCollider.bounds);
+            }
+        }
+
+        float bossFrontZ = hasBounds ? combinedBounds.min.z : transform.position.z;
+        return bossFrontZ - playerPosition.z;
     }
 
     private void Die()

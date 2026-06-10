@@ -436,11 +436,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TreasureChest
   hpBonus: 20
-  damageBonus: 5
-  attackSpeedBonus: 0.2
-  attackRangeBonus: 5
-  critRateBonus: 0.05
-  moveSpeedBonus: 0.2
+  damageBonus: 1
+  attackSpeedBonus: 0.08
+  attackRangeBonus: 1
+  critRateBonus: 0.005
+  moveSpeedBonus: 0.35
   rewardText: {fileID: 5962210008995258428}
 --- !u!1 &9184781466608305495
 GameObject:

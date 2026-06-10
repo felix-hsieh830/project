@@ -5,8 +5,8 @@ public class TreasureChest : MonoBehaviour
 {
     [Header("寶箱基礎數值")]
     public int hpBonus = 20;
-    public float damageBonus = 4.5f;
-    public float attackSpeedBonus = 0.18f;
+    public float damageBonus = 1f;
+    public float attackSpeedBonus = 0.08f;
     public float attackRangeBonus = 1.0f;
     public float critRateBonus = 0.005f;
     public float moveSpeedBonus = 0.35f;
@@ -29,10 +29,10 @@ public class TreasureChest : MonoBehaviour
         float distanceMultiplier = 1f + stage * 0.06f;
 
         hpBonus = Mathf.RoundToInt(hpBonus * distanceMultiplier);
-        damageBonus = (float)System.Math.Round(damageBonus * distanceMultiplier, 1);
-        attackSpeedBonus = (float)System.Math.Round(attackSpeedBonus * distanceMultiplier, 2);
+        damageBonus = 1f;
+        attackSpeedBonus = 0.08f;
         attackRangeBonus = 1f;
-        critRateBonus = (float)System.Math.Round(critRateBonus * distanceMultiplier, 3);
+        critRateBonus = 0.005f;
         moveSpeedBonus = (float)System.Math.Round(moveSpeedBonus * distanceMultiplier, 2);
 
         if (rewardText != null)
@@ -88,6 +88,7 @@ public class TreasureChest : MonoBehaviour
 
         if (stats != null)
         {
+            SfxManager.Play("pickup", 0.75f, 0.04f);
             string floatingMsg = rewardText.text.Replace("\n", " ");
             FloatingTextSpawner.instance?.Spawn(floatingMsg, other.transform.position, Color.green, Vector3.up, other.transform, 0.65f, 2.35f);
 

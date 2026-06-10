@@ -19,6 +19,8 @@ public class PlayerMove : MonoBehaviour
 
     private PlayerAnimatorController animController;
     private float horizontalInput;
+    public float CurrentForwardSpeed { get; private set; }
+    public float CurrentHorizontalSpeed { get; private set; }
 
     void Start()
     {
@@ -46,19 +48,19 @@ public class PlayerMove : MonoBehaviour
         // 🌟 刪掉原本下面這行！
         // horizontalInput = Input.GetAxisRaw("Horizontal"); 
 
-        float distance = transform.position.z;
+        float distance = transform.position.z - 30f;
         if (distance < 0) distance = 0;
 
-        float currentForwardSpeed = 0f;
+        CurrentForwardSpeed = 0f;
 
         if (!isFightingBigBoss)
         {
             float extraSpeed = (distance / 100f) * speedPerHundredMeters;
-            currentForwardSpeed = Mathf.Min(forwardSpeed + extraSpeed, maxForwardSpeed);
+            CurrentForwardSpeed = Mathf.Min(forwardSpeed + extraSpeed, maxForwardSpeed);
         }
 
-        float currentHorizontalSpeed = Mathf.Min(horizontalSpeed, maxHorizontalSpeed);
-        Vector3 movement = new Vector3(horizontalInput * currentHorizontalSpeed, 0, currentForwardSpeed);
+        CurrentHorizontalSpeed = Mathf.Min(horizontalSpeed, maxHorizontalSpeed);
+        Vector3 movement = new Vector3(horizontalInput * CurrentHorizontalSpeed, 0, CurrentForwardSpeed);
         transform.Translate(movement * Time.deltaTime, Space.World);
 
         Vector3 pos = transform.position;

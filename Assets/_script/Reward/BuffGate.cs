@@ -76,10 +76,10 @@ public class BuffGate : MonoBehaviour
         float baseVal = 0;
         switch (myBuffType)
         {
-            case BuffType.AttackSpeed: baseVal = 0.18f; break;
+            case BuffType.AttackSpeed: baseVal = 0.08f; break;
             case BuffType.AttackRange: baseVal = 1.0f; break;
             case BuffType.CritRate: baseVal = 0.01f; break;
-            case BuffType.Damage: baseVal = 2.5f; break;
+            case BuffType.Damage: baseVal = 1f; break;
             case BuffType.MaxHP: baseVal = 20f; break;
         }
 
@@ -98,9 +98,23 @@ public class BuffGate : MonoBehaviour
 
         buffValue = baseVal * rarityMultiplier * distanceMultiplier;
 
-        if (myBuffType == BuffType.AttackRange)
+        if (myBuffType == BuffType.AttackRange || myBuffType == BuffType.Damage)
         {
             buffValue = rarity == "普通" ? 1f : 2f;
+        }
+
+        if (myBuffType == BuffType.AttackSpeed)
+        {
+            if (rarity == "普通") buffValue = 0.08f;
+            else if (rarity == "稀有") buffValue = 0.12f;
+            else buffValue = 0.16f;
+        }
+
+        if (myBuffType == BuffType.CritRate)
+        {
+            if (rarity == "普通") buffValue = 0.01f;
+            else if (rarity == "稀有") buffValue = 0.015f;
+            else buffValue = 0.02f;
         }
 
         if (myBuffType == BuffType.MaxHP)
@@ -122,6 +136,7 @@ public class BuffGate : MonoBehaviour
         if (stats != null)
         {
             hasTriggered = true;
+            SfxManager.Play("reward", 0.68f, 0.08f);
 
             string floatingMsg = buffText.text.Replace("\n", " ");
             FloatingTextSpawner.instance?.Spawn(floatingMsg, other.transform.position, Color.green, Vector3.up, other.transform, 0.65f, 2.35f);
