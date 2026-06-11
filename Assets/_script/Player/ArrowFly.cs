@@ -12,6 +12,7 @@ public class ArrowFly : MonoBehaviour
     public float speed = 15f;
     public float lifeTime = 3f;
     public float minLifeTime = 0.12f;
+    public float hitRadius = 0.12f;
 
     [Header("箭矢外觀")]
     public bool disableColorAnimator = true;
@@ -162,7 +163,7 @@ public class ArrowFly : MonoBehaviour
 
         RaycastHit hit;
 
-        if (Physics.Raycast(transform.position, transform.forward, out hit, stepDistance))
+        if (Physics.SphereCast(transform.position, hitRadius, transform.forward, out hit, stepDistance, ~0, QueryTriggerInteraction.Collide))
         {
             HandleCollision(hit.collider);
         }

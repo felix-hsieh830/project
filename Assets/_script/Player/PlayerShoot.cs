@@ -78,7 +78,7 @@ public class PlayerShoot : MonoBehaviour
         }
 
         int actualArrowCount = Mathf.Max(1, stats.arrowCount);
-        float flightSpeedMultiplier = 1f;
+        float flightSpeedMultiplier = GetFlightSpeedMultiplier(effectiveAttackSpeed);
         float inheritedArrowSpeed = currentPlayerZSpeed * inheritedForwardSpeedScale;
 
         float actualRange = Mathf.Min(stats.attackRange, 90f);
@@ -115,5 +115,11 @@ public class PlayerShoot : MonoBehaviour
         // 🌟 通知動畫控制器播放射擊動畫
         if (animController != null)
             animController.TriggerShootAnimation();
+    }
+
+    private float GetFlightSpeedMultiplier(float effectiveAttackSpeed)
+    {
+        float speedBonus = Mathf.Max(0f, effectiveAttackSpeed - 1f) * 0.16f;
+        return Mathf.Clamp(1f + speedBonus, 1f, 2.4f);
     }
 }

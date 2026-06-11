@@ -145,28 +145,46 @@ public class BossHealth : MonoBehaviour
 
     private float GetForwardDistanceToPlayer(Vector3 playerPosition)
     {
+        Vector3 arrowOrigin = playerPosition + new Vector3(0f, 1.2f, 1.5f);
         Collider[] colliders = GetComponentsInChildren<Collider>(true);
-        bool hasBounds = false;
-        Bounds combinedBounds = new Bounds(transform.position, Vector3.zero);
+        float closestForwardDistance = float.PositiveInfinity;
 
         for (int i = 0; i < colliders.Length; i++)
         {
             Collider targetCollider = colliders[i];
             if (targetCollider == null || !targetCollider.enabled) continue;
 
-            if (!hasBounds)
+            Vector3 closestPoint = targetCollider.ClosestPoint(arrowOrigin);
+            float forwardDistance = closestPoint.z - arrowOrigin.z;
+            if (forwardDistance < -0.25f) continue;
+
+            float sideOffset = Mathf.Abs(closestPoint.x - arrowOrigin.x);
+            float verticalOffset = Mathf.Abs(closestPoint.y - arrowOrigin.y);
+            float aimPenalty = sideOffset * 0.45f + verticalOffset * 0.2f;
+            closestForwardDistance = Mathf.Min(closestForwardDistance, Mathf.Max(0f, forwardDistance + aimPenalty));
+        }
+
+        if (float.IsInfinity(closestForwardDistance))
+        {
+            for (int i = 0; i < colliders.Length; i++)
             {
-                combinedBounds = targetCollider.bounds;
-                hasBounds = true;
-            }
-            else
-            {
-                combinedBounds.Encapsulate(targetCollider.bounds);
+                Collider targetCollider = colliders[i];
+                if (targetCollider == null || !targetCollider.enabled) continue;
+
+                Bounds bounds = targetCollider.bounds;
+                if (arrowOrigin.z <= bounds.max.z)
+                {
+                    closestForwardDistance = Mathf.Min(closestForwardDistance, Mathf.Max(0f, bounds.min.z - arrowOrigin.z));
+                }
             }
         }
 
-        float bossFrontZ = hasBounds ? combinedBounds.min.z : transform.position.z;
-        return bossFrontZ - playerPosition.z;
+        if (float.IsInfinity(closestForwardDistance))
+        {
+            closestForwardDistance = transform.position.z - arrowOrigin.z;
+        }
+
+        return closestForwardDistance;
     }
 
     private void Die()
