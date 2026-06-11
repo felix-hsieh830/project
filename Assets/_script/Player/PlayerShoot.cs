@@ -85,20 +85,15 @@ public class PlayerShoot : MonoBehaviour
         float estimatedTotalSpeed = arrowBaseSpeed * flightSpeedMultiplier + inheritedArrowSpeed;
         float flightTime = actualRange / Mathf.Max(estimatedTotalSpeed, 0.1f);
 
-        float anglePerStep = 1.5f;   // 每根箭的生成角度間隔
         float yawPerStep = 4f;   // 越外側的箭飛行中額外擴散角速度
 
         for (int i = 0; i < actualArrowCount; i++)
         {
-            float center = (actualArrowCount - 1) / 2f;
-            float distFromCenter = i - center; // 負 = 左，正 = 右
-            float maxAngleLimit = 100f;
-
-            float spawnAngle = Mathf.Clamp(distFromCenter * anglePerStep, -maxAngleLimit, maxAngleLimit);
-            float yawRate = (distFromCenter / Mathf.Max(center, 1f)) * yawPerStep / Mathf.Max(flightTime, 0.1f);
+            Vector3 formationOffset = GetWifiFormationOffset(i, actualArrowCount, out float distFromCenter, out float spawnAngle);
+            float yawRate = (spawnAngle / 42f) * yawPerStep / Mathf.Max(flightTime, 0.1f);
 
             Quaternion arrowRotation = transform.rotation * Quaternion.Euler(0, spawnAngle, 0);
-            Vector3 spawnPosition = transform.position + new Vector3(distFromCenter * 0.18f, 1.2f, 1.5f - Mathf.Abs(distFromCenter) * 0.08f);
+            Vector3 spawnPosition = transform.position + formationOffset;
             GameObject arrow = Instantiate(arrowPrefab, spawnPosition, arrowRotation);
 
             ArrowFly arrowScript = arrow.GetComponent<ArrowFly>();
@@ -119,7 +114,25 @@ public class PlayerShoot : MonoBehaviour
 
     private float GetFlightSpeedMultiplier(float effectiveAttackSpeed)
     {
-        float speedBonus = Mathf.Max(0f, effectiveAttackSpeed - 1f) * 0.16f;
-        return Mathf.Clamp(1f + speedBonus, 1f, 2.4f);
+        float speedBonus = Mathf.Max(0f, effectiveAttackSpeed - 1f) * 0.24f;
+        return 1f + speedBonus;
+    }
+
+    private Vector3 GetWifiFormationOffset(int arrowIndex, int arrowCount, out float distFromCenter, out float spawnAngle)
+    {
+        float center = (arrowCount - 1) * 0.5f;
+        distFromCenter = arrowIndex - center;
+
+        float arcHalfAngle = Mathf.Lerp(8f, 48f, Mathf.InverseLerp(1f, 28f, arrowCount));
+        float angleOnArc = arrowCount <= 1 ? 0f : Mathf.Lerp(-arcHalfAngle, arcHalfAngle, arrowIndex / (arrowCount - 1f));
+        float radius = 2.45f;
+        float angleRad = angleOnArc * Mathf.Deg2Rad;
+        spawnAngle = angleOnArc * 0.45f;
+
+        return new Vector3(
+            Mathf.Sin(angleRad) * radius,
+            1.2f,
+            Mathf.Cos(angleRad) * radius
+        );
     }
 }

@@ -123,7 +123,6 @@ public class ArrowFly : MonoBehaviour
         if (Random.value <= critRate)
         {
             finalDamage = playerDamage * critDamage;
-            transform.localScale *= 1.8f;
         }
         else
         {

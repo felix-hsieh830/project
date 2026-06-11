@@ -9,13 +9,14 @@ public class BossHealth : MonoBehaviour
     public float currentHp;
     public bool isBigBoss = false;
     public float bigBossEngageDistance = 32f;
-    public float bigBossAttackRangePadding = 2.5f;
 
     [Header("UI 顯示")]
     public TextMeshPro hpText;
 
     private bool isDead = false;
     public bool isInvincible = false; // 🌟 新增：無敵狀態開關
+    private const float ArrowSpawnForwardOffset = 1.5f;
+    private const float BigBossRangeSafety = 0.5f;
 
     public void SetupHealth(float newHP)
     {
@@ -42,7 +43,7 @@ public class BossHealth : MonoBehaviour
                 float distanceToPlayer = GetForwardDistanceToPlayer(playerMove.transform.position);
                 PlayerStats playerStats = playerMove.GetComponent<PlayerStats>();
                 float playerAttackRange = playerStats != null ? playerStats.attackRange : 0f;
-                bool canReachBoss = distanceToPlayer <= playerAttackRange + bigBossAttackRangePadding;
+                bool canReachBoss = distanceToPlayer <= playerAttackRange + BigBossRangeSafety;
 
                 if (distanceToPlayer <= bigBossEngageDistance && distanceToPlayer > 0 && canReachBoss)
                 {
@@ -145,46 +146,7 @@ public class BossHealth : MonoBehaviour
 
     private float GetForwardDistanceToPlayer(Vector3 playerPosition)
     {
-        Vector3 arrowOrigin = playerPosition + new Vector3(0f, 1.2f, 1.5f);
-        Collider[] colliders = GetComponentsInChildren<Collider>(true);
-        float closestForwardDistance = float.PositiveInfinity;
-
-        for (int i = 0; i < colliders.Length; i++)
-        {
-            Collider targetCollider = colliders[i];
-            if (targetCollider == null || !targetCollider.enabled) continue;
-
-            Vector3 closestPoint = targetCollider.ClosestPoint(arrowOrigin);
-            float forwardDistance = closestPoint.z - arrowOrigin.z;
-            if (forwardDistance < -0.25f) continue;
-
-            float sideOffset = Mathf.Abs(closestPoint.x - arrowOrigin.x);
-            float verticalOffset = Mathf.Abs(closestPoint.y - arrowOrigin.y);
-            float aimPenalty = sideOffset * 0.45f + verticalOffset * 0.2f;
-            closestForwardDistance = Mathf.Min(closestForwardDistance, Mathf.Max(0f, forwardDistance + aimPenalty));
-        }
-
-        if (float.IsInfinity(closestForwardDistance))
-        {
-            for (int i = 0; i < colliders.Length; i++)
-            {
-                Collider targetCollider = colliders[i];
-                if (targetCollider == null || !targetCollider.enabled) continue;
-
-                Bounds bounds = targetCollider.bounds;
-                if (arrowOrigin.z <= bounds.max.z)
-                {
-                    closestForwardDistance = Mathf.Min(closestForwardDistance, Mathf.Max(0f, bounds.min.z - arrowOrigin.z));
-                }
-            }
-        }
-
-        if (float.IsInfinity(closestForwardDistance))
-        {
-            closestForwardDistance = transform.position.z - arrowOrigin.z;
-        }
-
-        return closestForwardDistance;
+        return Mathf.Max(0f, transform.position.z - playerPosition.z - ArrowSpawnForwardOffset);
     }
 
     private void Die()
